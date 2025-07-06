@@ -12,17 +12,33 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.4",
   "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^24.0.10",
     "bcrypt": "^6.0.0",
     "eslint": "^9.30.1",
     "prettier": "^3.6.2",
+    "prisma": "^6.11.1",
     "ts-node": "^10.9.2",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@prisma/client": "^6.11.1",
-    "prisma": "^6.11.1"
+    "@prisma/client": "^6.11.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "use-latest-callback": "0.1.5"
+    },
+    "ignoredBuiltDependencies": [
+      "@swc/core"
+    ],
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "bcrypt",
+      "prisma"
+    ]
   }
 }
