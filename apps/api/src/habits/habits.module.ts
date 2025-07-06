@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { HabitsController } from './habits.controller';
 import { HabitsService } from './habits.service';
+import { HabitsController } from './habits.controller';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [AuthModule],
   controllers: [HabitsController],
   providers: [HabitsService, PrismaService],
+  exports: [HabitsService],
 })
 export class HabitsModule {}

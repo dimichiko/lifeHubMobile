@@ -1,68 +1,92 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateHabitDto } from './dto/create-habit.dto';
+import { UpdateHabitDto } from './dto/update-habit.dto';
 
 @Injectable()
 export class HabitsService {
   constructor(private prisma: PrismaService) {}
 
+  async create(userId: string, createHabitDto: CreateHabitDto) {
+    const { name, frequency, reminderAt, goal } = createHabitDto;
+
+    return this.prisma.habit.create({
+      data: {
+        name,
+        frequency,
+        reminderAt: reminderAt ? new Date(reminderAt) : null,
+        goal,
+        userId,
+      },
+    });
+  }
+
   async findAll(userId: string) {
     return this.prisma.habit.findMany({
-      where: { userId, archived: false },
+      where: {
+        userId,
+        archived: false,
+      },
       include: {
         logs: {
-          orderBy: { date: 'desc' },
+          orderBy: {
+            date: 'desc',
+          },
           take: 30, // últimos 30 logs
         },
       },
     });
   }
 
-  async create(
-    userId: string,
-    data: { name: string; frequency: string; reminderAt?: Date; goal?: number },
-  ) {
-    return this.prisma.habit.create({
-      data: {
-        ...data,
+  async findOne(userId: string, id: string) {
+    const habit = await this.prisma.habit.findFirst({
+      where: {
+        id,
         userId,
       },
-    });
-  }
-
-  async update(
-    userId: string,
-    habitId: string,
-    data: {
-      name?: string;
-      frequency?: string;
-      reminderAt?: Date;
-      goal?: number;
-      archived?: boolean;
-    },
-  ) {
-    // Verificar que el hábito pertenece al usuario
-    const habit = await this.prisma.habit.findFirst({
-      where: { id: habitId, userId },
+      include: {
+        logs: {
+          orderBy: {
+            date: 'desc',
+          },
+        },
+      },
     });
 
     if (!habit) {
       throw new NotFoundException('Habit not found');
     }
 
+    return habit;
+  }
+
+  async update(userId: string, id: string, updateHabitDto: UpdateHabitDto) {
+    // Verificar que el hábito pertenece al usuario
+    const habit = await this.prisma.habit.findFirst({
+      where: { id, userId },
+    });
+
+    if (!habit) {
+      throw new NotFoundException('Habit not found');
+    }
+
+    const { name, frequency, reminderAt, goal } = updateHabitDto;
+
     return this.prisma.habit.update({
-      where: { id: habitId },
-      data,
+      where: { id },
+      data: {
+        name,
+        frequency,
+        reminderAt: reminderAt ? new Date(reminderAt) : null,
+        goal,
+      },
     });
   }
 
-  async delete(userId: string, habitId: string) {
+  async remove(userId: string, id: string) {
     // Verificar que el hábito pertenece al usuario
     const habit = await this.prisma.habit.findFirst({
-      where: { id: habitId, userId },
+      where: { id, userId },
     });
 
     if (!habit) {
@@ -71,64 +95,8 @@ export class HabitsService {
 
     // Soft delete - marcar como archivado
     return this.prisma.habit.update({
-      where: { id: habitId },
+      where: { id },
       data: { archived: true },
-    });
-  }
-
-  async createLog(
-    userId: string,
-    data: {
-      habitId: string;
-      date: Date;
-      note?: string;
-      mood?: string;
-      energyLevel?: number;
-    },
-  ) {
-    // Verificar que el hábito pertenece al usuario
-    const habit = await this.prisma.habit.findFirst({
-      where: { id: data.habitId, userId },
-    });
-
-    if (!habit) {
-      throw new NotFoundException('Habit not found');
-    }
-
-    // Verificar que no existe un log para la misma fecha
-    const existingLog = await this.prisma.habitLog.findFirst({
-      where: {
-        userId,
-        habitId: data.habitId,
-        date: data.date,
-      },
-    });
-
-    if (existingLog) {
-      throw new ForbiddenException('Log already exists for this date');
-    }
-
-    return this.prisma.habitLog.create({
-      data: {
-        ...data,
-        userId,
-      },
-    });
-  }
-
-  async getLogs(userId: string, habitId: string) {
-    // Verificar que el hábito pertenece al usuario
-    const habit = await this.prisma.habit.findFirst({
-      where: { id: habitId, userId },
-    });
-
-    if (!habit) {
-      throw new NotFoundException('Habit not found');
-    }
-
-    return this.prisma.habitLog.findMany({
-      where: { userId, habitId },
-      orderBy: { date: 'desc' },
     });
   }
 }

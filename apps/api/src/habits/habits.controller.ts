@@ -2,97 +2,54 @@ import {
   Controller,
   Get,
   Post,
-  Put,
-  Delete,
   Body,
+  Patch,
   Param,
+  Delete,
   UseGuards,
-  Request,
 } from '@nestjs/common';
 import { HabitsService } from './habits.service';
-import { AuthGuard } from '../auth/auth.guard';
-import { z } from 'zod';
-import { Request as ExpressRequest } from 'express';
+import { CreateHabitDto } from './dto/create-habit.dto';
+import { UpdateHabitDto } from './dto/update-habit.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
-interface AuthenticatedRequest extends ExpressRequest {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
+interface JwtPayload {
+  userId: string;
+  email: string;
 }
 
-const createHabitSchema = z.object({
-  name: z.string().min(1),
-  frequency: z.string(),
-  reminderAt: z.string().optional(),
-  goal: z.number().optional(),
-});
-
-const updateHabitSchema = z.object({
-  name: z.string().min(1).optional(),
-  frequency: z.string().optional(),
-  reminderAt: z.string().optional(),
-  goal: z.number().optional(),
-  archived: z.boolean().optional(),
-});
-
-const createLogSchema = z.object({
-  habitId: z.string(),
-  date: z.string(),
-  note: z.string().optional(),
-  mood: z.string().optional(),
-  energyLevel: z.number().optional(),
-});
-
 @Controller('habits')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class HabitsController {
-  constructor(private habitsService: HabitsService) {}
-
-  @Get()
-  async findAll(@Request() req: AuthenticatedRequest) {
-    return this.habitsService.findAll(req.user.id);
-  }
+  constructor(private readonly habitsService: HabitsService) {}
 
   @Post()
-  async create(@Request() req: AuthenticatedRequest, @Body() body: unknown) {
-    const data = createHabitSchema.parse(body);
-    return this.habitsService.create(req.user.id, {
-      ...data,
-      reminderAt: data.reminderAt ? new Date(data.reminderAt) : undefined,
-    });
+  create(@CurrentUser() user: JwtPayload, @Body() createHabitDto: CreateHabitDto) {
+    return this.habitsService.create(user.userId, createHabitDto);
   }
 
-  @Put(':id')
-  async update(
-    @Request() req: AuthenticatedRequest,
+  @Get()
+  findAll(@CurrentUser() user: JwtPayload) {
+    return this.habitsService.findAll(user.userId);
+  }
+
+  @Get(':id')
+  findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.habitsService.findOne(user.userId, id);
+  }
+
+  @Patch(':id')
+  update(
+    @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
-    @Body() body: unknown,
+    @Body() updateHabitDto: UpdateHabitDto,
   ) {
-    const data = updateHabitSchema.parse(body);
-    return this.habitsService.update(req.user.id, id, {
-      ...data,
-      reminderAt: data.reminderAt ? new Date(data.reminderAt) : undefined,
-    });
+    return this.habitsService.update(user.userId, id, updateHabitDto);
   }
 
   @Delete(':id')
-  async delete(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.habitsService.delete(req.user.id, id);
-  }
-
-  @Post('logs')
-  async createLog(@Request() req: AuthenticatedRequest, @Body() body: unknown) {
-    const data = createLogSchema.parse(body);
-    return this.habitsService.createLog(req.user.id, {
-      ...data,
-      date: new Date(data.date),
-    });
-  }
-
-  @Get(':id/logs')
-  async getLogs(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.habitsService.getLogs(req.user.id, id);
+  remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.habitsService.remove(user.userId, id);
   }
 }
