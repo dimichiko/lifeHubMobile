@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator();
 
 // Auth Stack (Login/Register)
 const AuthStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Navigator screenOptions={{ headerShown: false }} {...({} as any)}>
     <Stack.Screen name="Login" component={LoginScreen} />
     <Stack.Screen name="Register" component={RegisterScreen} />
   </Stack.Navigator>
@@ -24,7 +24,7 @@ const AuthStack = () => (
 
 // App Tabs (Home/Habits)
 const AppTabs = () => (
-  <Tab.Navigator>
+  <Tab.Navigator {...({} as any)}>
     <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Habits" component={HabitsScreen} />
   </Tab.Navigator>
@@ -32,7 +32,7 @@ const AppTabs = () => (
 
 // Main App Stack (Tabs + CreateHabit)
 const AppStack = () => (
-  <Stack.Navigator>
+  <Stack.Navigator {...({} as any)}>
     <Stack.Screen
       name="MainTabs"
       component={AppTabs}
