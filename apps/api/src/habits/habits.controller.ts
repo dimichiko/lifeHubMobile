@@ -11,6 +11,7 @@ import {
 import { HabitsService } from './habits.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
+import { CreateHabitLogDto } from './dto/create-habit-log.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -54,5 +55,13 @@ export class HabitsController {
   @Delete(':id')
   remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.habitsService.remove(user.userId, id);
+  }
+
+  @Post('habit-logs')
+  createLog(
+    @CurrentUser() user: JwtPayload,
+    @Body() createHabitLogDto: CreateHabitLogDto,
+  ) {
+    return this.habitsService.createLog(user.userId, createHabitLogDto);
   }
 }
