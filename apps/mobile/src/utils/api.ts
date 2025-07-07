@@ -40,3 +40,66 @@ api.interceptors.response.use(
     return Promise.reject(new Error(error.message || "Response failed"));
   },
 );
+
+// Auth functions
+export const login = async (credentials: {
+  email: string;
+  password: string;
+}) => {
+  const response = await api.post("/auth/login", credentials);
+  return response.data;
+};
+
+export const register = async (userData: {
+  email: string;
+  password: string;
+  name: string;
+}) => {
+  const response = await api.post("/auth/register", userData);
+  return response.data;
+};
+
+// Habits functions
+export const getHabits = async () => {
+  const response = await api.get("/habits");
+  return response.data;
+};
+
+export const createHabit = async (habitData: {
+  name: string;
+  frequency: string;
+  reminderTime?: string;
+  goal?: number;
+}) => {
+  const response = await api.post("/habits", habitData);
+  return response.data;
+};
+
+export const updateHabit = async (
+  id: string,
+  habitData: {
+    name?: string;
+    frequency?: string;
+    reminderTime?: string;
+    goal?: number;
+  },
+) => {
+  const response = await api.patch(`/habits/${id}`, habitData);
+  return response.data;
+};
+
+export const deleteHabit = async (id: string) => {
+  const response = await api.delete(`/habits/${id}`);
+  return response.data;
+};
+
+export const createHabitLog = async (logData: {
+  habitId: string;
+  date?: string;
+  note?: string;
+  mood?: string;
+  energyLevel?: number;
+}) => {
+  const response = await api.post("/habits/habit-logs", logData);
+  return response.data;
+};

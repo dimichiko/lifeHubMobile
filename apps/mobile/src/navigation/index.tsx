@@ -9,6 +9,7 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
 import HabitsScreen from "../screens/HabitsScreen";
+import CreateHabitScreen from "../screens/CreateHabitScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -29,13 +30,33 @@ const AppTabs = () => (
   </Tab.Navigator>
 );
 
+// Main App Stack (Tabs + CreateHabit)
+const AppStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="MainTabs"
+      component={AppTabs}
+      options={{ headerShown: false }}
+    />
+    <Stack.Screen
+      name="CreateHabit"
+      component={CreateHabitScreen}
+      options={{
+        title: "Crear Hábito",
+        presentation: "modal",
+        headerShown: true,
+      }}
+    />
+  </Stack.Navigator>
+);
+
 // Main Navigation
 export const Navigation = () => {
   const { user } = useAuth();
 
   return (
     <NavigationContainer>
-      {user ? <AppTabs /> : <AuthStack />}
+      {user ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
   );
 };
