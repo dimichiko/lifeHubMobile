@@ -3,6 +3,7 @@
 ## ✅ **Estado de Servicios**
 
 ### **Backend (NestJS)**
+
 - **Puerto**: 3000
 - **Estado**: ✅ **FUNCIONANDO**
 - **Proceso**: PID 84908
@@ -17,6 +18,7 @@
   - `POST /habits/logs` - Marcar como completado
 
 ### **Frontend (Expo)**
+
 - **Puerto**: 8081
 - **Estado**: ✅ **FUNCIONANDO**
 - **Proceso**: PID 84932
@@ -27,15 +29,18 @@
 ## 📱 **Cómo Probar la Aplicación**
 
 ### **Opción 1: Expo Go (Recomendado)**
+
 1. **Instalar Expo Go** en tu dispositivo móvil
 2. **Escanear el QR code** que aparece en el terminal
 3. **La app se abrirá** automáticamente en tu dispositivo
 
 ### **Opción 2: Web Browser**
+
 1. **Abrir navegador** en http://localhost:8081
 2. **La app se cargará** en el navegador
 
 ### **Opción 3: Simulador**
+
 ```bash
 # Para iOS Simulator
 npx expo start --ios
@@ -47,6 +52,7 @@ npx expo start --android
 ## 🔐 **Credenciales de Prueba**
 
 ### **Usuario Demo**
+
 ```
 Email: demo@example.com
 Password: password123
@@ -68,6 +74,7 @@ Password: password123
 ## 🔧 **Endpoints de Prueba**
 
 ### **Verificar Backend**
+
 ```bash
 # Health check
 curl http://localhost:3000/
@@ -79,6 +86,7 @@ curl -X POST http://localhost:3000/auth/login \
 ```
 
 ### **Verificar Frontend**
+
 ```bash
 # Página principal
 curl http://localhost:8081/
@@ -122,4 +130,4 @@ pnpm prisma studio
 # Verificar estado de servicios
 lsof -i :3000  # Backend
 lsof -i :8081  # Frontend
-``` 
+```

@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:seed": "node --loader ts-node/esm prisma/seed.ts",
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
     "prepare": "husky install"
   },
   "keywords": [],

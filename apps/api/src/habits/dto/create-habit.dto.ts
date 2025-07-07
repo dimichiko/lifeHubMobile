@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsDateString, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsInt,
+  Min,
+} from 'class-validator';
 
 export class CreateHabitDto {
   @IsString()
@@ -15,4 +21,4 @@ export class CreateHabitDto {
   @IsInt()
   @Min(1)
   goal?: number;
-} 
+}

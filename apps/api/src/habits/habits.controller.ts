@@ -25,7 +25,10 @@ export class HabitsController {
   constructor(private readonly habitsService: HabitsService) {}
 
   @Post()
-  create(@CurrentUser() user: JwtPayload, @Body() createHabitDto: CreateHabitDto) {
+  create(
+    @CurrentUser() user: JwtPayload,
+    @Body() createHabitDto: CreateHabitDto,
+  ) {
     return this.habitsService.create(user.userId, createHabitDto);
   }
 
