@@ -1,22 +1,64 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
-import {
-  useMutation,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
-import axios from "axios";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "../utils/api";
+import { useQueryClient } from "@tanstack/react-query";
 
-const AuthContext = createContext(null);
-const TOKEN_KEY = "accessToken";
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isLoading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
+  // Load stored auth data on app start
   useEffect(() => {
-    SecureStore.getItemAsync(TOKEN_KEY).then(setToken);
+    const loadStoredAuth = async () => {
+      try {
+        const storedToken = await SecureStore.getItemAsync("token");
+        const storedUser = await SecureStore.getItemAsync("user");
+
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Error loading stored auth:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStoredAuth();
   }, []);
 
+  // Login mutation
   const loginMutation = useMutation({
     mutationFn: async ({
       email,
@@ -25,56 +67,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: string;
       password: string;
     }) => {
-      const { data } = await axios.post("http://localhost:3000/auth/login", {
-        email,
-        password,
-      });
-      await SecureStore.setItemAsync(TOKEN_KEY, data.access_token);
-      setToken(data.access_token);
-      return data;
+      const response = await api.post("/auth/login", { email, password });
+      return response.data;
+    },
+    onSuccess: async (data) => {
+      const { user: userData, token: tokenData } = data;
+      setUser(userData);
+      setToken(tokenData);
+      await SecureStore.setItemAsync("token", tokenData);
+      await SecureStore.setItemAsync("user", JSON.stringify(userData));
+      queryClient.setQueryData(["me"], userData);
     },
   });
 
+  // Register mutation
   const registerMutation = useMutation({
     mutationFn: async ({
+      name,
       email,
       password,
     }: {
+      name: string;
       email: string;
       password: string;
     }) => {
-      const { data } = await axios.post("http://localhost:3000/auth/register", {
+      const response = await api.post("/auth/register", {
+        name,
         email,
         password,
       });
-      return data;
+      return response.data;
+    },
+    onSuccess: async (data) => {
+      const { user: userData, token } = data;
+      setUser(userData);
+      setToken(token);
+      await SecureStore.setItemAsync("token", token);
+      await SecureStore.setItemAsync("user", JSON.stringify(userData));
+      queryClient.setQueryData(["me"], userData);
+    },
+    onError: (err: any) => {
+      console.log("", err?.response?.data ?? err);
+      alert(JSON.stringify(err?.response?.data ?? err));
     },
   });
 
-  const logout = async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    setToken(null);
+  const login = async (email: string, password: string) => {
+    await loginMutation.mutateAsync({ email, password });
   };
 
-  return (
-    <AuthContext.Provider
-      value={{ token, setToken, loginMutation, registerMutation, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  const register = async (name: string, email: string, password: string) => {
+    await registerMutation.mutateAsync({ name, email, password });
+  };
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+  const logout = async () => {
+    setUser(null);
+    setToken(null);
+    await SecureStore.deleteItemAsync("token");
+    await SecureStore.deleteItemAsync("user");
+  };
 
-export function useLogin() {
-  const { loginMutation } = useAuth();
-  return loginMutation;
-}
+  const value: AuthContextType = {
+    user,
+    token,
+    login,
+    register,
+    logout,
+    isLoading:
+      isLoading || loginMutation.isPending || registerMutation.isPending,
+  };
 
-export function useRegister() {
-  const { registerMutation } = useAuth();
-  return registerMutation;
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

@@ -1,2 +1,10 @@
 const { getDefaultConfig } = require("@expo/metro-config");
-module.exports = getDefaultConfig(__dirname);
+const path = require("path");
+
+const config = getDefaultConfig(__dirname);
+config.resolver.nodeModulesPaths = [
+  path.resolve(__dirname, "node_modules"),
+  path.resolve(__dirname, "../../node_modules"),
+];
+config.resolver.enableSymlinks = true;
+module.exports = config;

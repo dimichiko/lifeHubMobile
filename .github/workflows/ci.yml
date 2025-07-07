@@ -6,16 +6,46 @@ on:
   pull_request:
 
 jobs:
-  build:
+  test-and-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
       - name: Install pnpm
-        run: bunx corepack enable && bunx pnpm --version
-      - name: Install deps
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm eslint . --fix
-      - name: Test
+
+      - name: Lint code
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format --check
+
+      - name: Test API
         run: pnpm --filter api test
+
+      - name: Build API
+        run: pnpm --filter api build

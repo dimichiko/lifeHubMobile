@@ -2,45 +2,40 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text } from "react-native";
+import { useAuth } from "../providers/AuthProvider";
 
-// Pantallas dummy
-function LoginScreen() {
-  return <Text>Login</Text>;
-}
-function RegisterScreen() {
-  return <Text>Register</Text>;
-}
-function HomeScreen() {
-  return <Text>Home</Text>;
-}
-function HabitsScreen() {
-  return <Text>Habits</Text>;
-}
+// Screens
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
+import HomeScreen from "../screens/HomeScreen";
+import HabitsScreen from "../screens/HabitsScreen";
 
-const AuthStack = createStackNavigator();
+const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function AppTabs() {
-  return (
-    <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Habits" component={HabitsScreen} />
-    </Tab.Navigator>
-  );
-}
+// Auth Stack (Login/Register)
+const AuthStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="Login" component={LoginScreen} />
+    <Stack.Screen name="Register" component={RegisterScreen} />
+  </Stack.Navigator>
+);
 
-export default function Navigation({ isLoggedIn }: { isLoggedIn: boolean }) {
+// App Tabs (Home/Habits)
+const AppTabs = () => (
+  <Tab.Navigator>
+    <Tab.Screen name="Home" component={HomeScreen} />
+    <Tab.Screen name="Habits" component={HabitsScreen} />
+  </Tab.Navigator>
+);
+
+// Main Navigation
+export const Navigation = () => {
+  const { user } = useAuth();
+
   return (
     <NavigationContainer>
-      {isLoggedIn ? (
-        <AppTabs />
-      ) : (
-        <AuthStack.Navigator>
-          <AuthStack.Screen name="Login" component={LoginScreen} />
-          <AuthStack.Screen name="Register" component={RegisterScreen} />
-        </AuthStack.Navigator>
-      )}
+      {user ? <AppTabs /> : <AuthStack />}
     </NavigationContainer>
   );
-}
+};
