@@ -1,17 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 
 // Configurar comportamiento de notificaciones
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: () => {
+    return Promise.resolve({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    });
+  },
 });
 
 interface NotificationsProviderProps {
@@ -21,24 +23,19 @@ interface NotificationsProviderProps {
 export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({
   children,
 }) => {
-  const [expoPushToken, setExpoPushToken] = useState<string | undefined>();
-  const [notification, setNotification] =
-    useState<Notifications.Notification>();
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then((token) =>
-      setExpoPushToken(token),
-    );
+    void registerForPushNotificationsAsync();
 
     notificationListener.current =
-      Notifications.addNotificationReceivedListener((notification) => {
-        setNotification(notification);
+      Notifications.addNotificationReceivedListener((notification: any) => {
+        console.log("Notification received:", notification);
       });
 
     responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
+      Notifications.addNotificationResponseReceivedListener((response: any) => {
         console.log("Notification response:", response);
       });
 
@@ -59,8 +56,6 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({
 
 // Función para solicitar permisos y registrar para notificaciones
 async function registerForPushNotificationsAsync() {
-  let token;
-
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -85,23 +80,26 @@ async function registerForPushNotificationsAsync() {
       return;
     }
 
-    token = (
-      await Notifications.getExpoPushTokenAsync({
-        projectId: "your-project-id", // Reemplazar con tu project ID
-      })
-    ).data;
+    try {
+      const token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: "your-project-id", // Reemplazar con tu project ID
+        })
+      ).data;
+      console.log("Push token:", token);
+    } catch (error) {
+      console.log("Error getting push token:", error);
+    }
   } else {
     console.log("Must use physical device for Push Notifications");
   }
-
-  return token;
 }
 
 // Función para agendar notificaciones
 export const scheduleNotification = async (
   title: string,
   body: string,
-  trigger: Notifications.NotificationTriggerInput,
+  trigger: any,
 ) => {
   try {
     await Notifications.scheduleNotificationAsync({
