@@ -23,8 +23,8 @@ interface NotificationsProviderProps {
 export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({
   children,
 }) => {
-  const notificationListener = useRef<any>();
-  const responseListener = useRef<any>();
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
     void registerForPushNotificationsAsync();
@@ -68,11 +68,11 @@ async function registerForPushNotificationsAsync() {
   if (Device.isDevice) {
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+    let finalStatus = existingStatus as string;
 
-    if (existingStatus !== "granted") {
+    if ((existingStatus as string) !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+      finalStatus = status as string;
     }
 
     if (finalStatus !== "granted") {
@@ -99,7 +99,7 @@ async function registerForPushNotificationsAsync() {
 export const scheduleNotification = async (
   title: string,
   body: string,
-  trigger: any,
+  trigger: Notifications.NotificationTriggerInput,
 ) => {
   try {
     await Notifications.scheduleNotificationAsync({
