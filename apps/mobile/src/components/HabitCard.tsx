@@ -8,6 +8,8 @@ interface Habit {
   name: string;
   frequency: string;
   goal?: number;
+  streak: number;
+  isDoneToday: boolean;
   logs: Array<{
     id: string;
     date: string;
@@ -39,8 +41,7 @@ export default function HabitCard({ habit }: HabitCardProps) {
   };
 
   const isCompletedToday = () => {
-    const today = new Date().toISOString().split("T")[0];
-    return habit.logs.some((log) => log.date.startsWith(today));
+    return habit.isDoneToday;
   };
 
   const getFrequencyText = (frequency: string) => {
@@ -70,7 +71,7 @@ export default function HabitCard({ habit }: HabitCardProps) {
       {habit.goal && <Text style={styles.goal}>Meta: {habit.goal}</Text>}
 
       <View style={styles.stats}>
-        <Text style={styles.streak}>Streak: {habit.logs.length} días</Text>
+        <Text style={styles.streak}>🔥 {habit.streak} días consecutivos</Text>
       </View>
 
       <TouchableOpacity

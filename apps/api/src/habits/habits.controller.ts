@@ -12,6 +12,7 @@ import { HabitsService } from './habits.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
+import { HabitDto } from './dto/habit.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -34,7 +35,7 @@ export class HabitsController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: JwtPayload) {
+  findAll(@CurrentUser() user: JwtPayload): Promise<HabitDto[]> {
     return this.habitsService.findAll(user.userId);
   }
 

@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
 import { CreateHabitLogDto } from './dto/create-habit-log.dto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class HabitsService {
@@ -27,7 +28,7 @@ export class HabitsService {
   }
 
   async findAll(userId: string) {
-    return this.prisma.habit.findMany({
+    const habits = await this.prisma.habit.findMany({
       where: {
         userId,
         archived: false,
@@ -41,6 +42,57 @@ export class HabitsService {
         },
       },
     });
+
+    // Calcular streak y isDoneToday para cada hábito
+    const habitsWithStreak = habits.map((habit) => {
+      const { streak, isDoneToday } = this.calculateStreak(habit.logs);
+      return {
+        ...habit,
+        streak,
+        isDoneToday,
+      };
+    });
+
+    return habitsWithStreak;
+  }
+
+  private calculateStreak(logs: any[]) {
+    if (logs.length === 0) {
+      return { streak: 0, isDoneToday: false };
+    }
+
+    const today = dayjs().startOf('day');
+    const yesterday = dayjs().subtract(1, 'day').startOf('day');
+
+    // Verificar si está completado hoy
+    const isDoneToday = logs.some((log) =>
+      dayjs(log.date).startOf('day').isSame(today),
+    );
+
+    // Calcular streak
+    let streak = 0;
+    let currentDate = today;
+
+    // Si no está completado hoy, empezar desde ayer
+    if (!isDoneToday) {
+      currentDate = yesterday;
+    }
+
+    for (let i = 0; i < 365; i++) {
+      // Máximo 1 año de streak
+      const hasLogForDate = logs.some((log) =>
+        dayjs(log.date).startOf('day').isSame(currentDate),
+      );
+
+      if (hasLogForDate) {
+        streak++;
+        currentDate = currentDate.subtract(1, 'day');
+      } else {
+        break;
+      }
+    }
+
+    return { streak, isDoneToday };
   }
 
   async findOne(userId: string, id: string) {

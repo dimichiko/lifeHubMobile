@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import { getHabits } from "../utils/api";
 import HabitCard from "../components/HabitCard";
+import Dashboard from "../components/Dashboard";
 
 export default function HabitsScreen() {
   const navigation = useNavigation();
@@ -66,16 +67,19 @@ export default function HabitsScreen() {
       </View>
 
       {habits && habits.length > 0 ? (
-        <FlatList
-          data={habits}
-          renderItem={({ item }) => <HabitCard habit={item} />}
-          keyExtractor={(item) => item.id}
-          style={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-          }
-          showsVerticalScrollIndicator={false}
-        />
+        <>
+          <Dashboard habits={habits} />
+          <FlatList
+            data={habits}
+            renderItem={({ item }) => <HabitCard habit={item} />}
+            keyExtractor={(item) => item.id}
+            style={styles.list}
+            refreshControl={
+              <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            }
+            showsVerticalScrollIndicator={false}
+          />
+        </>
       ) : (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyTitle}>No tienes hábitos aún</Text>

@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";
 import { createHabit } from "../utils/api";
+import { scheduleNotification } from "../providers/NotificationsProvider";
 
 const createHabitSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -58,11 +59,41 @@ export default function CreateHabitScreen() {
     },
   });
 
-  const onSubmit = (data: CreateHabitForm) => {
-    createHabitMutation.mutate({
-      ...data,
-      goal: data.goal || undefined,
-    });
+  const onSubmit = async (data: CreateHabitForm) => {
+    try {
+      // Crear el hábito
+      await createHabitMutation.mutateAsync({
+        name: data.name,
+        frequency: data.frequency,
+        reminderTime: data.reminderTime,
+        goal: data.goal || undefined,
+      });
+
+      // Programar notificación si se especificó hora de recordatorio
+      if (data.reminderTime) {
+        const [hours, minutes] = data.reminderTime.split(":").map(Number);
+        const now = new Date();
+        const reminderTime = new Date();
+        reminderTime.setHours(hours, minutes, 0, 0);
+
+        // Si la hora ya pasó hoy, programar para mañana
+        if (reminderTime <= now) {
+          reminderTime.setDate(reminderTime.getDate() + 1);
+        }
+
+        await scheduleNotification(
+          `Recordatorio: ${data.name}`,
+          `¡Es hora de completar tu hábito "${data.name}"!`,
+          {
+            hour: hours,
+            minute: minutes,
+            repeats: true,
+          } as any,
+        );
+      }
+    } catch (error) {
+      // El error ya se maneja en la mutación
+    }
   };
 
   return (

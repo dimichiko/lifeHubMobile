@@ -17,6 +17,8 @@
     "@tanstack/react-query": "^5.81.5",
     "axios": "^1.10.0",
     "expo": "~53.0.17",
+    "expo-device": "^7.1.4",
+    "expo-notifications": "^0.31.4",
     "expo-secure-store": "^14.2.3",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
