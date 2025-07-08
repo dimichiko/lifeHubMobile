@@ -1,9 +1,22 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
+
+// Get API URL from Expo config or environment
+const getApiUrl = () => {
+  // Try to get from Expo config first
+  const expoApiUrl = Constants.expoConfig?.extra?.API_URL;
+  if (expoApiUrl) {
+    return expoApiUrl;
+  }
+
+  // Fallback to environment variable
+  return process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+};
 
 // Create axios instance
 export const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000",
+  baseURL: getApiUrl(),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

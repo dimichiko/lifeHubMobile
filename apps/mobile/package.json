@@ -6,7 +6,11 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:android": "expo export --platform android",
+    "build:ios": "expo export --platform ios",
+    "build:web": "expo export --platform web",
+    "build:all": "expo export --platform all"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -17,6 +21,7 @@
     "@tanstack/react-query": "^5.81.5",
     "axios": "^1.10.0",
     "expo": "~53.0.17",
+    "expo-constants": "^17.1.7",
     "expo-device": "^7.1.4",
     "expo-notifications": "^0.31.4",
     "expo-secure-store": "^14.2.3",

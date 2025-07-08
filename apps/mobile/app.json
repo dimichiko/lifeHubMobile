@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "LifeHub Pro",
+    "slug": "lifehub-pro",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,20 +13,25 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lifehub.pro"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.lifehub.pro"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "updates": {
       "enabled": false
+    },
+    "extra": {
+      "API_URL": "https://lifehub-api.onrender.com"
     }
   }
 }
