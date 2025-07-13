@@ -30,24 +30,26 @@ export class GamificationService {
 
   static calculateExperienceToNextLevel(experience: number): number {
     const currentLevel = this.calculateLevel(experience);
-    const experienceForCurrentLevel = (currentLevel - 1) * this.EXPERIENCE_PER_LEVEL;
+    const experienceForCurrentLevel =
+      (currentLevel - 1) * this.EXPERIENCE_PER_LEVEL;
     return this.EXPERIENCE_PER_LEVEL - (experience - experienceForCurrentLevel);
   }
 
   static calculateProgressToNextLevel(experience: number): number {
     const currentLevel = this.calculateLevel(experience);
-    const experienceForCurrentLevel = (currentLevel - 1) * this.EXPERIENCE_PER_LEVEL;
+    const experienceForCurrentLevel =
+      (currentLevel - 1) * this.EXPERIENCE_PER_LEVEL;
     const experienceInCurrentLevel = experience - experienceForCurrentLevel;
     return (experienceInCurrentLevel / this.EXPERIENCE_PER_LEVEL) * 100;
   }
 
   static getPointsForHabitCompletion(streakDays: number = 0): number {
     let points = this.POINTS_PER_HABIT;
-    
+
     // Bonus por racha
     if (streakDays >= 7) points += 20;
     else if (streakDays >= 3) points += 10;
-    
+
     return points;
   }
 
@@ -162,7 +164,7 @@ export class GamificationService {
 
   static checkAchievements(userStats: UserStats): Achievement[] {
     const achievements = this.getAchievements();
-    const updatedAchievements = achievements.map(achievement => {
+    const updatedAchievements = achievements.map((achievement) => {
       let progress = 0;
       let unlocked = false;
 
@@ -234,12 +236,12 @@ export class GamificationService {
 
   static getRewardsForLevel(level: number): string[] {
     const rewards: string[] = [];
-    
+
     if (level >= 5) rewards.push("🎨 Temas personalizados");
     if (level >= 10) rewards.push("📊 Estadísticas avanzadas");
     if (level >= 15) rewards.push("🏆 Logros especiales");
     if (level >= 20) rewards.push("👑 Estado VIP");
-    
+
     return rewards;
   }
-} 
+}

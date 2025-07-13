@@ -32,7 +32,9 @@ export default function DashboardScreen() {
   const [stats, setStats] = useState<HabitStats[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month">("week");
+  const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month">(
+    "week",
+  );
 
   useEffect(() => {
     fetchDashboardData();
@@ -95,7 +97,11 @@ export default function DashboardScreen() {
     return "#F44336";
   };
 
-  const renderProgressBar = (completed: number, total: number, height: number = 8) => {
+  const renderProgressBar = (
+    completed: number,
+    total: number,
+    height: number = 8,
+  ) => {
     const percentage = total > 0 ? (completed / total) * 100 : 0;
     return (
       <View style={[styles.progressBar, { height }]}>
@@ -191,14 +197,16 @@ export default function DashboardScreen() {
                     {
                       height: `${(day.completions / day.total) * 100}%`,
                       backgroundColor: getCompletionColor(
-                        (day.completions / day.total) * 100
+                        (day.completions / day.total) * 100,
                       ),
                     },
                   ]}
                 />
               </View>
               <Text style={styles.barLabel}>{day.date}</Text>
-              <Text style={styles.barValue}>{day.completions}/{day.total}</Text>
+              <Text style={styles.barValue}>
+                {day.completions}/{day.total}
+              </Text>
             </View>
           ))}
         </View>
@@ -535,4 +543,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 4,
   },
-}); 
+});

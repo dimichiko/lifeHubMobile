@@ -27,30 +27,38 @@ export class NotificationService {
     }
 
     if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      
+
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      
-      if (finalStatus !== 'granted') {
-        alert('¡Necesitamos permisos para enviarte recordatorios!');
+
+      if (finalStatus !== "granted") {
+        alert("¡Necesitamos permisos para enviarte recordatorios!");
         return;
       }
-      
-      token = (await Notifications.getExpoPushTokenAsync({
-        projectId: 'your-project-id', // Reemplazar con tu project ID
-      })).data;
+
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId: "your-project-id", // Reemplazar con tu project ID
+        })
+      ).data;
     } else {
-      alert('Debes usar un dispositivo físico para las notificaciones');
+      alert("Debes usar un dispositivo físico para las notificaciones");
     }
 
     return token;
   }
 
-  static async scheduleHabitReminder(habitId: string, habitName: string, time: Date, daysOfWeek: string[] = []) {
+  static async scheduleHabitReminder(
+    habitId: string,
+    habitName: string,
+    time: Date,
+    daysOfWeek: string[] = [],
+  ) {
     if (daysOfWeek.length > 0) {
       // Notificación recurrente en días específicos
       for (const day of daysOfWeek) {
@@ -91,31 +99,37 @@ export class NotificationService {
   static async scheduleHabitCompletion(habitName: string) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: '✅ ¡Hábito completado!',
+        title: "✅ ¡Hábito completado!",
         body: `¡Felicidades! Has completado: ${habitName}`,
-        data: { type: 'completion' },
+        data: { type: "completion" },
       },
       trigger: null, // Notificación inmediata
     });
   }
 
-  static async scheduleStreakNotification(streakDays: number, habitName: string) {
+  static async scheduleStreakNotification(
+    streakDays: number,
+    habitName: string,
+  ) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: '🔥 ¡Racha impresionante!',
+        title: "🔥 ¡Racha impresionante!",
         body: `¡${streakDays} días seguidos con ${habitName}! ¡Sigue así!`,
-        data: { type: 'streak' },
+        data: { type: "streak" },
       },
       trigger: null,
     });
   }
 
   static async cancelHabitReminders(habitId: string) {
-    const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-    
+    const scheduledNotifications =
+      await Notifications.getAllScheduledNotificationsAsync();
+
     for (const notification of scheduledNotifications) {
       if (notification.content.data?.habitId === habitId) {
-        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+        await Notifications.cancelScheduledNotificationAsync(
+          notification.identifier,
+        );
       }
     }
   }
@@ -136,4 +150,4 @@ export class NotificationService {
     };
     return days[day] || 1;
   }
-} 
+}

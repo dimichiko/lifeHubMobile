@@ -46,7 +46,8 @@ export default function HomeScreen() {
       setHabits(response.data);
       setStats({
         totalHabits: response.data.length,
-        completedToday: response.data.filter((h: any) => h.completedToday).length,
+        completedToday: response.data.filter((h: any) => h.completedToday)
+          .length,
         streak: 7, // Placeholder - implementar lógica real
       });
     } catch (error: any) {
@@ -74,7 +75,7 @@ export default function HomeScreen() {
       [
         { text: "Cancelar", style: "cancel" },
         { text: "Cerrar sesión", style: "destructive", onPress: logout },
-      ]
+      ],
     );
   };
 
@@ -187,13 +188,16 @@ export default function HomeScreen() {
               <Text style={styles.emptyEmoji}>🪴</Text>
               <Text style={styles.emptyTitle}>Aún no tienes hábitos</Text>
               <Text style={styles.emptySubtext}>
-                Comienza con uno pequeño. Los grandes cambios empiezan con pasos simples.
+                Comienza con uno pequeño. Los grandes cambios empiezan con pasos
+                simples.
               </Text>
               <TouchableOpacity
                 style={styles.createFirstButton}
                 onPress={() => navigation.navigate("CreateHabit")}
               >
-                <Text style={styles.createFirstText}>📋 Crear mi primer hábito</Text>
+                <Text style={styles.createFirstText}>
+                  📋 Crear mi primer hábito
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -201,7 +205,9 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={habit.id}
                 style={styles.habitCard}
-                onPress={() => navigation.navigate("EditHabit", { habitId: habit.id })}
+                onPress={() =>
+                  navigation.navigate("EditHabit", { habitId: habit.id })
+                }
               >
                 <View style={styles.habitInfo}>
                   <Text style={styles.habitName}>{habit.name}</Text>

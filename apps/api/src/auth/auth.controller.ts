@@ -28,7 +28,8 @@ export class AuthController {
     try {
       return await this.authService.register(registerDto);
     } catch (error: any) {
-      const message = error?.response?.message || error?.message || 'Error en registro';
+      const message =
+        error?.response?.message || error?.message || 'Error en registro';
       throw new BadRequestException({ message });
     }
   }

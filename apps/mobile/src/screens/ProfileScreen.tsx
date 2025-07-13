@@ -9,7 +9,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../providers/AuthProvider";
-import { GamificationService, UserStats, Achievement } from "../utils/gamification";
+import {
+  GamificationService,
+  UserStats,
+  Achievement,
+} from "../utils/gamification";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -51,16 +55,20 @@ export default function ProfileScreen() {
       [
         { text: "Cancelar", style: "cancel" },
         { text: "Cerrar sesión", style: "destructive", onPress: logout },
-      ]
+      ],
     );
   };
 
   const getLevelProgress = () => {
-    return GamificationService.calculateProgressToNextLevel(userStats.experience);
+    return GamificationService.calculateProgressToNextLevel(
+      userStats.experience,
+    );
   };
 
   const getExperienceToNext = () => {
-    return GamificationService.calculateExperienceToNextLevel(userStats.experience);
+    return GamificationService.calculateExperienceToNextLevel(
+      userStats.experience,
+    );
   };
 
   const getLevelTitle = () => {
@@ -100,15 +108,13 @@ export default function ProfileScreen() {
         <View style={styles.levelHeader}>
           <Text style={styles.levelLabel}>Progreso al siguiente nivel</Text>
           <Text style={styles.levelProgress}>
-            {userStats.experience} / {userStats.experience + getExperienceToNext()} XP
+            {userStats.experience} /{" "}
+            {userStats.experience + getExperienceToNext()} XP
           </Text>
         </View>
         <View style={styles.progressBar}>
           <View
-            style={[
-              styles.progressFill,
-              { width: `${getLevelProgress()}%` },
-            ]}
+            style={[styles.progressFill, { width: `${getLevelProgress()}%` }]}
           />
         </View>
         <Text style={styles.nextLevelText}>
@@ -132,13 +138,15 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statItem}>
             <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-            <Text style={styles.statNumber}>{userStats.totalHabitsCompleted}</Text>
+            <Text style={styles.statNumber}>
+              {userStats.totalHabitsCompleted}
+            </Text>
             <Text style={styles.statLabel}>Hábitos completados</Text>
           </View>
           <View style={styles.statItem}>
             <Ionicons name="star" size={24} color="#9C27B0" />
             <Text style={styles.statNumber}>
-              {userStats.achievements.filter(a => a.unlocked).length}
+              {userStats.achievements.filter((a) => a.unlocked).length}
             </Text>
             <Text style={styles.statLabel}>Logros desbloqueados</Text>
           </View>
@@ -159,7 +167,9 @@ export default function ProfileScreen() {
             >
               <Text style={styles.achievementIcon}>{achievement.icon}</Text>
               <Text style={styles.achievementTitle}>{achievement.title}</Text>
-              <Text style={styles.achievementDesc}>{achievement.description}</Text>
+              <Text style={styles.achievementDesc}>
+                {achievement.description}
+              </Text>
               <View style={styles.achievementProgress}>
                 <View style={styles.achievementProgressBar}>
                   <View
@@ -175,7 +185,9 @@ export default function ProfileScreen() {
                   {achievement.progress}/{achievement.maxProgress}
                 </Text>
               </View>
-              <Text style={styles.achievementPoints}>+{achievement.points} XP</Text>
+              <Text style={styles.achievementPoints}>
+                +{achievement.points} XP
+              </Text>
             </View>
           ))}
         </View>
@@ -487,4 +499,4 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     flex: 1,
   },
-}); 
+});

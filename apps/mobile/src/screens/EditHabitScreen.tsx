@@ -181,7 +181,8 @@ export default function EditHabitScreen() {
               <Text
                 style={[
                   styles.dayButtonText,
-                  selectedDays.includes(day.value) && styles.dayButtonTextSelected,
+                  selectedDays.includes(day.value) &&
+                    styles.dayButtonTextSelected,
                 ]}
               >
                 {day.label}
@@ -197,7 +198,9 @@ export default function EditHabitScreen() {
         disabled={updateHabitMutation.isPending}
       >
         <Text style={styles.buttonText}>
-          {updateHabitMutation.isPending ? "Actualizando..." : "Actualizar Hábito"}
+          {updateHabitMutation.isPending
+            ? "Actualizando..."
+            : "Actualizar Hábito"}
         </Text>
       </TouchableOpacity>
     </ScrollView>
@@ -299,4 +302,4 @@ const styles = StyleSheet.create({
     color: "red",
     marginBottom: 10,
   },
-}); 
+});

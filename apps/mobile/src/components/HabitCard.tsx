@@ -66,7 +66,11 @@ export default function HabitCard({ habit }: HabitCardProps) {
   };
 
   const getDaysText = () => {
-    if (!habit.isRecurring || !habit.daysOfWeek || habit.daysOfWeek.length === 0) {
+    if (
+      !habit.isRecurring ||
+      !habit.daysOfWeek ||
+      habit.daysOfWeek.length === 0
+    ) {
       return "";
     }
 
@@ -80,7 +84,9 @@ export default function HabitCard({ habit }: HabitCardProps) {
       sunday: "Dom",
     };
 
-    return habit.daysOfWeek.map(day => dayLabels[day as keyof typeof dayLabels] || day).join(", ");
+    return habit.daysOfWeek
+      .map((day) => dayLabels[day as keyof typeof dayLabels] || day)
+      .join(", ");
   };
 
   const completedToday = isCompletedToday();

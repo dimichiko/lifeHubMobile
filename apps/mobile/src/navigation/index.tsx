@@ -1,18 +1,27 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useAuth } from "../providers/AuthProvider";
+import { View, Text, ActivityIndicator } from "react-native";
 
-// Screens
-import LoginScreen from "../screens/LoginScreen";
-import RegisterScreen from "../screens/RegisterScreen";
-import HomeScreen from "../screens/HomeScreen";
-import HabitsScreen from "../screens/HabitsScreen";
-import CreateHabitScreen from "../screens/CreateHabitScreen";
-import EditHabitScreen from "../screens/EditHabitScreen";
-import DashboardScreen from "../screens/DashboardScreen";
-import ProfileScreen from "../screens/ProfileScreen";
+// Lazy loaded screens
+const LoginScreen = lazy(() => import("../screens/LoginScreen"));
+const RegisterScreen = lazy(() => import("../screens/RegisterScreen"));
+const HomeScreen = lazy(() => import("../screens/HomeScreen"));
+const HabitsScreen = lazy(() => import("../screens/HabitsScreen"));
+const CreateHabitScreen = lazy(() => import("../screens/CreateHabitScreen"));
+const EditHabitScreen = lazy(() => import("../screens/EditHabitScreen"));
+const DashboardScreen = lazy(() => import("../screens/DashboardScreen"));
+const ProfileScreen = lazy(() => import("../screens/ProfileScreen"));
+
+// Loading component for lazy screens
+const ScreenLoader = () => (
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <ActivityIndicator size="large" color="#007AFF" />
+    <Text style={{ marginTop: 10, color: "#666" }}>Cargando...</Text>
+  </View>
+);
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -20,18 +29,60 @@ const Tab = createBottomTabNavigator();
 // Auth Stack (Login/Register)
 const AuthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }} {...({} as any)}>
-    <Stack.Screen name="Login" component={LoginScreen} />
-    <Stack.Screen name="Register" component={RegisterScreen} />
+    <Stack.Screen
+      name="Login"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <LoginScreen {...props} />
+        </Suspense>
+      )}
+    />
+    <Stack.Screen
+      name="Register"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <RegisterScreen {...props} />
+        </Suspense>
+      )}
+    />
   </Stack.Navigator>
 );
 
 // App Tabs (Home/Habits/Dashboard/Profile)
 const AppTabs = () => (
   <Tab.Navigator {...({} as any)}>
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Habits" component={HabitsScreen} />
-    <Tab.Screen name="Dashboard" component={DashboardScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Screen
+      name="Home"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <HomeScreen {...props} />
+        </Suspense>
+      )}
+    />
+    <Tab.Screen
+      name="Habits"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <HabitsScreen {...props} />
+        </Suspense>
+      )}
+    />
+    <Tab.Screen
+      name="Dashboard"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <DashboardScreen {...props} />
+        </Suspense>
+      )}
+    />
+    <Tab.Screen
+      name="Profile"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <ProfileScreen {...props} />
+        </Suspense>
+      )}
+    />
   </Tab.Navigator>
 );
 
@@ -45,7 +96,11 @@ const AppStack = () => (
     />
     <Stack.Screen
       name="CreateHabit"
-      component={CreateHabitScreen}
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <CreateHabitScreen {...props} />
+        </Suspense>
+      )}
       options={{
         title: "Crear Hábito",
         presentation: "modal",
@@ -54,7 +109,11 @@ const AppStack = () => (
     />
     <Stack.Screen
       name="EditHabit"
-      component={EditHabitScreen}
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <EditHabitScreen {...props} />
+        </Suspense>
+      )}
       options={{
         title: "Editar Hábito",
         presentation: "modal",

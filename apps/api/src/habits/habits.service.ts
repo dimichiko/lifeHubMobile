@@ -14,7 +14,8 @@ export class HabitsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, createHabitDto: CreateHabitDto) {
-    const { name, frequency, reminderAt, goal, isRecurring, daysOfWeek } = createHabitDto;
+    const { name, frequency, reminderAt, goal, isRecurring, daysOfWeek } =
+      createHabitDto;
 
     return this.prisma.habit.create({
       data: {
@@ -129,7 +130,8 @@ export class HabitsService {
       throw new NotFoundException('Habit not found');
     }
 
-    const { name, frequency, reminderAt, goal, isRecurring, daysOfWeek } = updateHabitDto;
+    const { name, frequency, reminderAt, goal, isRecurring, daysOfWeek } =
+      updateHabitDto;
 
     return this.prisma.habit.update({
       where: { id },
