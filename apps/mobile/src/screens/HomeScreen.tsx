@@ -49,16 +49,23 @@ export default function HomeScreen() {
         completedToday: response.data.filter((h: any) => h.completedToday).length,
         streak: 7, // Placeholder - implementar lógica real
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching habits:", error);
+      // Si es error 401, el usuario no está autenticado
+      if (error.response?.status === 401) {
+        console.log("Usuario no autenticado, redirigiendo a login");
+        // No hacer nada, el AuthProvider manejará la redirección
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHabits();
-  }, []);
+    if (user) {
+      fetchHabits();
+    }
+  }, [user]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -158,7 +165,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate("Habits")}
+              onPress={() => navigation.navigate("Dashboard")}
             >
               <Ionicons name="trending-up" size={24} color="#FF9800" />
               <Text style={styles.actionText}>Ver mi progreso</Text>

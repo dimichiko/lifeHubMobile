@@ -11,6 +11,8 @@ import HomeScreen from "../screens/HomeScreen";
 import HabitsScreen from "../screens/HabitsScreen";
 import CreateHabitScreen from "../screens/CreateHabitScreen";
 import EditHabitScreen from "../screens/EditHabitScreen";
+import DashboardScreen from "../screens/DashboardScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -23,11 +25,13 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
-// App Tabs (Home/Habits)
+// App Tabs (Home/Habits/Dashboard/Profile)
 const AppTabs = () => (
   <Tab.Navigator {...({} as any)}>
     <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Habits" component={HabitsScreen} />
+    <Tab.Screen name="Dashboard" component={DashboardScreen} />
+    <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
 );
 
