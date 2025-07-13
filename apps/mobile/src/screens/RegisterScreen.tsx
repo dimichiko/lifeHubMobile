@@ -23,8 +23,9 @@ export default function RegisterScreen({ navigation }: any) {
 
     try {
       await register(name, email, password);
-    } catch (error) {
-      Alert.alert("Error", "Error al crear la cuenta");
+    } catch (error: any) {
+      console.log("ERROR REGISTRO:", error);
+      Alert.alert("Error", JSON.stringify(error));
     }
   };
 

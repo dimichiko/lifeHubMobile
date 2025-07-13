@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Get,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -24,7 +25,12 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+    try {
+      return await this.authService.register(registerDto);
+    } catch (error: any) {
+      const message = error?.response?.message || error?.message || 'Error en registro';
+      throw new BadRequestException({ message });
+    }
   }
 
   @Post('login')

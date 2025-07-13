@@ -25,7 +25,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException({ message: 'User already exists' });
     }
 
     // Hash de la contraseña

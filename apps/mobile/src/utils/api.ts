@@ -4,14 +4,8 @@ import Constants from "expo-constants";
 
 // Get API URL from Expo config or environment
 const getApiUrl = () => {
-  // Try to get from Expo config first
-  const expoApiUrl = Constants.expoConfig?.extra?.API_URL;
-  if (expoApiUrl) {
-    return expoApiUrl;
-  }
-
-  // Fallback to environment variable
-  return process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+  // Forzar IP local para emulador iOS/Mac
+  return "http://192.168.1.210:3000"; // Cambia esta IP si tu red es diferente
 };
 
 // Create axios instance

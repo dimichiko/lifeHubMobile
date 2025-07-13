@@ -107,8 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       queryClient.setQueryData(["me"], userData);
     },
     onError: (err: any) => {
-      console.log("", err?.response?.data ?? err);
-      alert(JSON.stringify(err?.response?.data ?? err));
+      console.log("ERROR REGISTRO BACKEND RAW:", err?.response);
+      alert(JSON.stringify(err?.response));
     },
   });
 

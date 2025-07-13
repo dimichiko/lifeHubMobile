@@ -14,6 +14,9 @@ importers:
       '@prisma/client':
         specifier: ^6.11.1
         version: 6.11.1(prisma@6.11.1(typescript@5.8.3))(typescript@5.8.3)
+      zod:
+        specifier: ^4.0.5
+        version: 4.0.5
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.7
@@ -5703,6 +5706,9 @@ packages:
 
   zod@3.25.75:
     resolution: {integrity: sha512-OhpzAmVzabPOL6C3A3gpAifqr9MqihV/Msx3gor2b2kviCgcb+HM9SEOpMWwwNp9MRunWnhtAKUoo0AHhjyPPg==}
+
+  zod@4.0.5:
+    resolution: {integrity: sha512-/5UuuRPStvHXu7RS+gmvRf4NXrNxpSllGwDnCBcJZtQsKrviYXm54yDGV2KYNLT5kq0lHGcl7lqWJLgSaG+tgA==}
 
 snapshots:
 
@@ -12152,3 +12158,5 @@ snapshots:
   zod@3.25.74: {}
 
   zod@3.25.75: {}
+
+  zod@4.0.5: {}

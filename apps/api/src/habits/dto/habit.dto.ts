@@ -11,19 +11,16 @@ export class HabitDto {
   frequency: string;
 
   @ApiProperty({ required: false })
-  reminderAt?: Date;
+  reminderAt?: Date | null;
 
   @ApiProperty({ required: false })
-  goal?: number;
+  goal?: number | null;
 
   @ApiProperty()
   userId: string;
 
   @ApiProperty()
   createdAt: Date;
-
-  @ApiProperty()
-  updatedAt: Date;
 
   @ApiProperty()
   archived: boolean;
