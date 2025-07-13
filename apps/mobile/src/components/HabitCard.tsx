@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
 import { createHabitLog } from "../utils/api";
 
 interface Habit {
@@ -8,6 +9,8 @@ interface Habit {
   name: string;
   frequency: string;
   goal?: number;
+  isRecurring?: boolean;
+  daysOfWeek?: string[];
   streak: number;
   isDoneToday: boolean;
   logs: Array<{
@@ -22,6 +25,7 @@ interface HabitCardProps {
 
 export default function HabitCard({ habit }: HabitCardProps) {
   const queryClient = useQueryClient();
+  const navigation = useNavigation();
 
   const createLogMutation = useMutation({
     mutationFn: createHabitLog,
@@ -38,6 +42,10 @@ export default function HabitCard({ habit }: HabitCardProps) {
     createLogMutation.mutate({
       habitId: habit.id,
     });
+  };
+
+  const handleEdit = () => {
+    navigation.navigate("EditHabit" as never, { habit } as never);
   };
 
   const isCompletedToday = () => {
@@ -57,16 +65,43 @@ export default function HabitCard({ habit }: HabitCardProps) {
     }
   };
 
+  const getDaysText = () => {
+    if (!habit.isRecurring || !habit.daysOfWeek || habit.daysOfWeek.length === 0) {
+      return "";
+    }
+
+    const dayLabels = {
+      monday: "Lun",
+      tuesday: "Mar",
+      wednesday: "Mié",
+      thursday: "Jue",
+      friday: "Vie",
+      saturday: "Sáb",
+      sunday: "Dom",
+    };
+
+    return habit.daysOfWeek.map(day => dayLabels[day as keyof typeof dayLabels] || day).join(", ");
+  };
+
   const completedToday = isCompletedToday();
 
   return (
     <View style={[styles.card, completedToday && styles.cardCompleted]}>
       <View style={styles.header}>
-        <Text style={styles.name}>{habit.name}</Text>
-        <Text style={styles.frequency}>
-          {getFrequencyText(habit.frequency)}
-        </Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.name}>{habit.name}</Text>
+          <Text style={styles.frequency}>
+            {getFrequencyText(habit.frequency)}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+          <Text style={styles.editButtonText}>✏️</Text>
+        </TouchableOpacity>
       </View>
+
+      {habit.isRecurring && habit.daysOfWeek && habit.daysOfWeek.length > 0 && (
+        <Text style={styles.daysText}>Días: {getDaysText()}</Text>
+      )}
 
       {habit.goal && <Text style={styles.goal}>Meta: {habit.goal}</Text>}
 
@@ -117,14 +152,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 8,
+  },
+  titleContainer: {
+    flex: 1,
   },
   name: {
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
-    flex: 1,
+    marginBottom: 4,
   },
   frequency: {
     fontSize: 14,
@@ -133,6 +171,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    alignSelf: "flex-start",
+  },
+  editButton: {
+    padding: 8,
+  },
+  editButtonText: {
+    fontSize: 18,
+  },
+  daysText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+    fontStyle: "italic",
   },
   goal: {
     fontSize: 14,

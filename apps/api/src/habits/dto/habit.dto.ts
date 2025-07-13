@@ -26,6 +26,12 @@ export class HabitDto {
   archived: boolean;
 
   @ApiProperty()
+  isRecurring: boolean;
+
+  @ApiProperty({ type: [String] })
+  daysOfWeek: string[];
+
+  @ApiProperty()
   streak: number;
 
   @ApiProperty()

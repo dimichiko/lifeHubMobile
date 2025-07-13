@@ -38,6 +38,8 @@ model Habit {
   reminderAt  DateTime? // optional daily reminder
   archived    Boolean   @default(false)
   goal        Int?      // meta o valor objetivo
+  isRecurring Boolean   @default(false) // si el hábito es recurrente
+  daysOfWeek  String[]  @default([]) // días de la semana ["monday", "wednesday", "friday"]
   createdAt   DateTime  @default(now())
 
   logs        HabitLog[]

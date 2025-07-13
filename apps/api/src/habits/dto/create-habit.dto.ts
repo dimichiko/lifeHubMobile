@@ -1,24 +1,26 @@
-import {
-  IsString,
-  IsOptional,
-  IsDateString,
-  IsInt,
-  Min,
-} from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsArray } from 'class-validator';
 
 export class CreateHabitDto {
   @IsString()
   name: string;
 
   @IsString()
-  frequency: string; // "daily", "weekly", etc.
+  frequency: string;
 
   @IsOptional()
-  @IsDateString()
+  @IsString()
   reminderAt?: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsNumber()
   goal?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isRecurring?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  daysOfWeek?: string[];
 }

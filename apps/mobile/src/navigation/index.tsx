@@ -10,6 +10,7 @@ import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
 import HabitsScreen from "../screens/HabitsScreen";
 import CreateHabitScreen from "../screens/CreateHabitScreen";
+import EditHabitScreen from "../screens/EditHabitScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -30,7 +31,7 @@ const AppTabs = () => (
   </Tab.Navigator>
 );
 
-// Main App Stack (Tabs + CreateHabit)
+// Main App Stack (Tabs + CreateHabit + EditHabit)
 const AppStack = () => (
   <Stack.Navigator {...({} as any)}>
     <Stack.Screen
@@ -43,6 +44,15 @@ const AppStack = () => (
       component={CreateHabitScreen}
       options={{
         title: "Crear Hábito",
+        presentation: "modal",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="EditHabit"
+      component={EditHabitScreen}
+      options={{
+        title: "Editar Hábito",
         presentation: "modal",
         headerShown: true,
       }}
