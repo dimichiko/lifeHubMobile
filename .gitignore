@@ -1,11 +1,12 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
+.pnpm-store/
 
 # Production builds
 dist/
 build/
+.next/
+out/
 
 # Environment variables
 .env
@@ -19,6 +20,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # Runtime data
 pids
@@ -42,12 +44,6 @@ jspm_packages/
 # Optional eslint cache
 .eslintcache
 
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
 # Optional REPL history
 .node_repl_history
 
@@ -61,32 +57,38 @@ jspm_packages/
 .cache
 .parcel-cache
 
-# Next.js build output
+# next.js build output
 .next
 
-# Nuxt.js build / generate output
+# nuxt.js build output
 .nuxt
 
-# Gatsby files
-.cache/
-public
+# vuepress build output
+.vuepress/dist
 
-# Storybook build outputs
-.out
-.storybook-out
+# Serverless directories
+.serverless/
 
-# Temporary folders
-tmp/
-temp/
+# FuseBox cache
+.fusebox/
 
-# Editor directories and files
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS generated files
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -95,8 +97,16 @@ temp/
 ehthumbs.db
 Thumbs.db
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
 # Expo
 .expo/
+.expo-shared/
+
+# React Native
 *.jks
 *.p8
 *.p12
@@ -105,9 +115,28 @@ Thumbs.db
 *.orig.*
 web-build/
 
+# Metro
+.metro-health-check*
+
+# Flipper
+ios/Pods/
+
+# Temporary files
+*.tmp
+*.temp
+
 # Prisma
 prisma/migrations/
 
-# Database
-*.db
-*.sqlite
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.log
+*.pid
+*.seed
+*.pid.lock 

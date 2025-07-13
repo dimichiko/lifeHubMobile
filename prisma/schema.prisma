@@ -1,71 +1,75 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
+  id        String   @id @default(cuid())
+  email     String   @unique
   password  String
   name      String
-  timezone  String?   // zona horaria
-  theme     String?   // tema de la app (oscuro, claro)
-  language  String?   // idioma preferido
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  timezone  String?
+  theme     String?
+  language  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  habits     Habit[]
-  habitLogs  HabitLog[]
-  sessions   Session[]
+  habits    Habit[]
+  habitLogs HabitLog[]
+  sessions  Session[]
+
+  @@map("User")
 }
 
 model Habit {
-  id          String    @id @default(cuid())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  name        String
-  frequency   String    // e.g. "daily", "weekly"
-  reminderAt  DateTime? // optional daily reminder
-  archived    Boolean   @default(false)
-  goal        Int?      // meta o valor objetivo
-  isRecurring Boolean   @default(false) // si el hábito es recurrente
-  daysOfWeek  String[]  @default([]) // días de la semana ["monday", "wednesday", "friday"]
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  frequency  String
+  reminderAt DateTime?
+  archived   Boolean   @default(false)
+  goal       Int?
+  createdAt  DateTime  @default(now())
 
-  logs        HabitLog[]
+  user     User       @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  habitLogs HabitLog[]
+
+  @@map("Habit")
 }
 
 model HabitLog {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  habit       Habit    @relation(fields: [habitId], references: [id])
-  habitId     String
-  date        DateTime
-  note        String?
-  mood        String?  // estado de ánimo
-  energyLevel Int?     // nivel de energía
+  id         String   @id @default(cuid())
+  userId     String
+  habitId    String
+  date       DateTime
+  note       String?
+  mood       String?
+  energyLevel Int?
 
-  @@unique([userId, habitId, date]) // solo un log por día por hábito
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([userId, habitId, date])
+  @@map("HabitLog")
 }
 
 model Session {
-  id           String    @id @default(cuid())
-  user         User      @relation(fields: [userId], references: [id])
-  userId       String
-  token        String    @unique
-  userAgent    String?  // info del dispositivo
-  ip           String?  // dirección IP
-  createdAt    DateTime  @default(now())
-  expiresAt    DateTime
-}
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("Session")
+} 

@@ -49,232 +49,138 @@ const ScreenLoader = () => (
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Wrappers para cada screen con Suspense
+const LoginScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <LoginScreen {...props} />
+  </Suspense>
+);
+const RegisterScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <RegisterScreen {...props} />
+  </Suspense>
+);
+const HomeScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <HomeScreen {...props} />
+  </Suspense>
+);
+const HabitsScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <HabitsScreen {...props} />
+  </Suspense>
+);
+const DashboardScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <DashboardScreen {...props} />
+  </Suspense>
+);
+const ProfileScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <ProfileScreen {...props} />
+  </Suspense>
+);
+const CreateHabitScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <CreateHabitScreen {...props} />
+  </Suspense>
+);
+const EditHabitScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <EditHabitScreen {...props} />
+  </Suspense>
+);
+const NotificationsSettingsScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <NotificationsSettingsScreen {...props} />
+  </Suspense>
+);
+const ThemeSettingsScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <ThemeSettingsScreen {...props} />
+  </Suspense>
+);
+const HelpScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <HelpScreen {...props} />
+  </Suspense>
+);
+const HowToCreateHabitScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <HowToCreateHabitScreen {...props} />
+  </Suspense>
+);
+const PointsSystemScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <PointsSystemScreen {...props} />
+  </Suspense>
+);
+const AchievementsScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <AchievementsScreen {...props} />
+  </Suspense>
+);
+const StreaksScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <StreaksScreen {...props} />
+  </Suspense>
+);
+const ContactScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <ContactScreen {...props} />
+  </Suspense>
+);
+const SupportScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <SupportScreen {...props} />
+  </Suspense>
+);
+const SuggestionsScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <SuggestionsScreen {...props} />
+  </Suspense>
+);
+const BugReportScreenWrapper = (props) => (
+  <Suspense fallback={<ScreenLoader />}>
+    <BugReportScreen {...props} />
+  </Suspense>
+);
+
 // Auth Stack (Login/Register)
 const AuthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }} {...({} as any)}>
-    <Stack.Screen
-      name="Login"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <LoginScreen {...props} />
-        </Suspense>
-      )}
-    />
-    <Stack.Screen
-      name="Register"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <RegisterScreen {...props} />
-        </Suspense>
-      )}
-    />
+    <Stack.Screen name="Login" component={LoginScreenWrapper} />
+    <Stack.Screen name="Register" component={RegisterScreenWrapper} />
   </Stack.Navigator>
 );
 
 // App Tabs (Home/Habits/Dashboard/Profile)
 const AppTabs = () => (
   <Tab.Navigator {...({} as any)}>
-    <Tab.Screen
-      name="Home"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <HomeScreen {...props} />
-        </Suspense>
-      )}
-    />
-    <Tab.Screen
-      name="Habits"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <HabitsScreen {...props} />
-        </Suspense>
-      )}
-    />
-    <Tab.Screen
-      name="Dashboard"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <DashboardScreen {...props} />
-        </Suspense>
-      )}
-    />
-    <Tab.Screen
-      name="Profile"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <ProfileScreen {...props} />
-        </Suspense>
-      )}
-    />
+    <Tab.Screen name="Home" component={HomeScreenWrapper} />
+    <Tab.Screen name="Habits" component={HabitsScreenWrapper} />
+    <Tab.Screen name="Dashboard" component={DashboardScreenWrapper} />
+    <Tab.Screen name="Profile" component={ProfileScreenWrapper} />
   </Tab.Navigator>
 );
 
 // Main App Stack (Tabs + CreateHabit + EditHabit)
 const AppStack = () => (
   <Stack.Navigator {...({} as any)}>
-    <Stack.Screen
-      name="MainTabs"
-      component={AppTabs}
-      options={{ headerShown: false }}
-    />
-    <Stack.Screen
-      name="CreateHabit"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <CreateHabitScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Crear Hábito",
-        presentation: "modal",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="EditHabit"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <EditHabitScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Editar Hábito",
-        presentation: "modal",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="NotificationsSettings"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <NotificationsSettingsScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Notificaciones",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="ThemeSettings"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <ThemeSettingsScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Tema",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="Help"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <HelpScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Ayuda",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="HowToCreateHabit"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <HowToCreateHabitScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "¿Cómo crear un hábito?",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="PointsSystem"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <PointsSystemScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Sistema de Puntos",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="Achievements"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <AchievementsScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Logros y Recompensas",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="Streaks"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <StreaksScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Rachas y Streaks",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="Contact"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <ContactScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Contacto y Soporte",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="Support"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <SupportScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Soporte Técnico",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="Suggestions"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <SuggestionsScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Sugerencias",
-        headerShown: true,
-      }}
-    />
-    <Stack.Screen
-      name="BugReport"
-      component={(props) => (
-        <Suspense fallback={<ScreenLoader />}>
-          <BugReportScreen {...props} />
-        </Suspense>
-      )}
-      options={{
-        title: "Reportar Bug",
-        headerShown: true,
-      }}
-    />
+    <Stack.Screen name="MainTabs" component={AppTabs} options={{ headerShown: false }} />
+    <Stack.Screen name="CreateHabit" component={CreateHabitScreenWrapper} options={{ title: "Crear Hábito", presentation: "modal", headerShown: true }} />
+    <Stack.Screen name="EditHabit" component={EditHabitScreenWrapper} options={{ title: "Editar Hábito", presentation: "modal", headerShown: true }} />
+    <Stack.Screen name="NotificationsSettings" component={NotificationsSettingsScreenWrapper} options={{ title: "Notificaciones", headerShown: true }} />
+    <Stack.Screen name="ThemeSettings" component={ThemeSettingsScreenWrapper} options={{ title: "Tema", headerShown: true }} />
+    <Stack.Screen name="Help" component={HelpScreenWrapper} options={{ title: "Ayuda", headerShown: true }} />
+    <Stack.Screen name="HowToCreateHabit" component={HowToCreateHabitScreenWrapper} options={{ title: "¿Cómo crear un hábito?", headerShown: true }} />
+    <Stack.Screen name="PointsSystem" component={PointsSystemScreenWrapper} options={{ title: "Sistema de Puntos", headerShown: true }} />
+    <Stack.Screen name="Achievements" component={AchievementsScreenWrapper} options={{ title: "Logros y Recompensas", headerShown: true }} />
+    <Stack.Screen name="Streaks" component={StreaksScreenWrapper} options={{ title: "Rachas y Streaks", headerShown: true }} />
+    <Stack.Screen name="Contact" component={ContactScreenWrapper} options={{ title: "Contacto y Soporte", headerShown: true }} />
+    <Stack.Screen name="Support" component={SupportScreenWrapper} options={{ title: "Soporte Técnico", headerShown: true }} />
+    <Stack.Screen name="Suggestions" component={SuggestionsScreenWrapper} options={{ title: "Sugerencias", headerShown: true }} />
+    <Stack.Screen name="BugReport" component={BugReportScreenWrapper} options={{ title: "Reportar Bug", headerShown: true }} />
   </Stack.Navigator>
 );
 
