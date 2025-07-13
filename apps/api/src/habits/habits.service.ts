@@ -203,4 +203,23 @@ export class HabitsService {
       },
     });
   }
+
+  async findAllLogs(userId: string) {
+    return this.prisma.habitLog.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        habit: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        date: 'desc',
+      },
+    });
+  }
 }

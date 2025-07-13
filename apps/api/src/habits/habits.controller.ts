@@ -65,4 +65,9 @@ export class HabitsController {
   ) {
     return this.habitsService.createLog(user.userId, createHabitLogDto);
   }
+
+  @Get('habit-logs')
+  findAllLogs(@CurrentUser() user: JwtPayload) {
+    return this.habitsService.findAllLogs(user.userId);
+  }
 }

@@ -6,6 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../utils/api";
@@ -28,10 +31,21 @@ interface WeeklyData {
   total: number;
 }
 
+interface DashboardData {
+  totalHabits: number;
+  totalCompletions: number;
+  currentStreak: number;
+  averageCompletionRate: number;
+  habits: HabitStats[];
+  weeklyData: WeeklyData[];
+}
+
 export default function DashboardScreen() {
-  const [stats, setStats] = useState<HabitStats[]>([]);
-  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month">(
     "week",
   );
@@ -43,45 +57,141 @@ export default function DashboardScreen() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Simular datos para el demo
-      const mockStats: HabitStats[] = [
-        {
-          id: "1",
-          name: "Beber agua",
-          totalCompletions: 45,
-          currentStreak: 7,
-          longestStreak: 12,
-          completionRate: 85,
-          lastCompleted: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          name: "Ejercicio",
-          totalCompletions: 23,
-          currentStreak: 3,
-          longestStreak: 8,
-          completionRate: 65,
-          lastCompleted: new Date().toISOString(),
-        },
-      ];
 
-      const mockWeeklyData: WeeklyData[] = [
-        { date: "Lun", completions: 5, total: 6 },
-        { date: "Mar", completions: 4, total: 6 },
-        { date: "Mié", completions: 6, total: 6 },
-        { date: "Jue", completions: 3, total: 6 },
-        { date: "Vie", completions: 5, total: 6 },
-        { date: "Sáb", completions: 4, total: 6 },
-        { date: "Dom", completions: 6, total: 6 },
-      ];
+      // Obtener hábitos del usuario
+      const habitsResponse = await api.get("/habits");
+      const habits = habitsResponse.data;
 
-      setStats(mockStats);
-      setWeeklyData(mockWeeklyData);
+      // Obtener logs de hábitos
+      const logsResponse = await api.get("/habits/habit-logs");
+      const logs = logsResponse.data;
+
+      // Calcular estadísticas
+      const stats = calculateHabitStats(habits, logs);
+      const weeklyData = calculateWeeklyData(habits, logs);
+
+      const totalHabits = habits.length;
+      const totalCompletions = logs.length;
+      const currentStreak = Math.max(...stats.map((s) => s.currentStreak), 0);
+      const averageCompletionRate =
+        stats.length > 0
+          ? Math.round(
+              stats.reduce((sum, s) => sum + s.completionRate, 0) /
+                stats.length,
+            )
+          : 0;
+
+      setDashboardData({
+        totalHabits,
+        totalCompletions,
+        currentStreak,
+        averageCompletionRate,
+        habits: stats,
+        weeklyData,
+      });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      Alert.alert(
+        "Error",
+        "No se pudieron cargar los datos del dashboard. Intenta de nuevo.",
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateHabitStats = (habits: any[], logs: any[]): HabitStats[] => {
+    return habits.map((habit) => {
+      const habitLogs = logs.filter((log) => log.habitId === habit.id);
+      const totalCompletions = habitLogs.length;
+
+      // Calcular racha actual
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 0;
+
+      const sortedLogs = habitLogs.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      );
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      for (let i = 0; i < 30; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(today.getDate() - i);
+
+        const hasLog = sortedLogs.some((log) => {
+          const logDate = new Date(log.date);
+          logDate.setHours(0, 0, 0, 0);
+          return logDate.getTime() === checkDate.getTime();
+        });
+
+        if (hasLog) {
+          tempStreak++;
+          if (i === 0) currentStreak = tempStreak;
+        } else {
+          if (tempStreak > longestStreak) longestStreak = tempStreak;
+          tempStreak = 0;
+        }
+      }
+
+      if (tempStreak > longestStreak) longestStreak = tempStreak;
+
+      // Calcular tasa de completado (últimos 30 días)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+
+      const recentLogs = habitLogs.filter(
+        (log) => new Date(log.date) >= thirtyDaysAgo,
+      );
+
+      const completionRate = Math.round((recentLogs.length / 30) * 100);
+
+      return {
+        id: habit.id,
+        name: habit.name,
+        totalCompletions,
+        currentStreak,
+        longestStreak,
+        completionRate,
+        lastCompleted: sortedLogs[0]?.date,
+      };
+    });
+  };
+
+  const calculateWeeklyData = (habits: any[], logs: any[]): WeeklyData[] => {
+    const days = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const weekData: WeeklyData[] = [];
+
+    const today = new Date();
+    const totalHabits = habits.length;
+
+    for (let i = 6; i >= 0; i--) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+
+      const dayLogs = logs.filter((log) => {
+        const logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+        checkDate.setHours(0, 0, 0, 0);
+        return logDate.getTime() === checkDate.getTime();
+      });
+
+      weekData.push({
+        date: days[checkDate.getDay()],
+        completions: dayLogs.length,
+        total: totalHabits,
+      });
+    }
+
+    return weekData;
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
   };
 
   const getStreakEmoji = (streak: number) => {
@@ -118,8 +228,40 @@ export default function DashboardScreen() {
     );
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3B82F6" />
+        <Text style={styles.loadingText}>Cargando dashboard...</Text>
+      </View>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle" size={64} color="#F44336" />
+        <Text style={styles.errorTitle}>Error al cargar datos</Text>
+        <Text style={styles.errorText}>
+          No se pudieron cargar los datos del dashboard
+        </Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchDashboardData}
+        >
+          <Text style={styles.retryButtonText}>Reintentar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>📊 Dashboard</Text>
@@ -131,17 +273,23 @@ export default function DashboardScreen() {
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Ionicons name="trophy" size={24} color="#FFD700" />
-            <Text style={styles.summaryNumber}>7</Text>
+            <Text style={styles.summaryNumber}>
+              {dashboardData.currentStreak}
+            </Text>
             <Text style={styles.summaryLabel}>Días seguidos</Text>
           </View>
           <View style={styles.summaryItem}>
             <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-            <Text style={styles.summaryNumber}>68</Text>
+            <Text style={styles.summaryNumber}>
+              {dashboardData.totalCompletions}
+            </Text>
             <Text style={styles.summaryLabel}>Completados</Text>
           </View>
           <View style={styles.summaryItem}>
             <Ionicons name="trending-up" size={24} color="#2196F3" />
-            <Text style={styles.summaryNumber}>75%</Text>
+            <Text style={styles.summaryNumber}>
+              {dashboardData.averageCompletionRate}%
+            </Text>
             <Text style={styles.summaryLabel}>Tasa de éxito</Text>
           </View>
         </View>
@@ -188,7 +336,7 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.chartContainer}>
-          {weeklyData.map((day, index) => (
+          {dashboardData.weeklyData.map((day, index) => (
             <View key={index} style={styles.chartBar}>
               <View style={styles.barContainer}>
                 <View
@@ -215,75 +363,147 @@ export default function DashboardScreen() {
       {/* Estadísticas por hábito */}
       <View style={styles.statsCard}>
         <Text style={styles.statsTitle}>Estadísticas por Hábito</Text>
-        {stats.map((habit) => (
-          <View key={habit.id} style={styles.habitStats}>
-            <View style={styles.habitHeader}>
-              <Text style={styles.habitName}>{habit.name}</Text>
-              <Text style={styles.streakEmoji}>
-                {getStreakEmoji(habit.currentStreak)}
-              </Text>
-            </View>
+        {dashboardData.habits.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="stats-chart" size={48} color="#ccc" />
+            <Text style={styles.emptyStateText}>
+              No hay hábitos para mostrar
+            </Text>
+            <Text style={styles.emptyStateSubtext}>
+              Crea tu primer hábito para ver estadísticas
+            </Text>
+          </View>
+        ) : (
+          dashboardData.habits.map((habit) => (
+            <View key={habit.id} style={styles.habitStats}>
+              <View style={styles.habitHeader}>
+                <Text style={styles.habitName}>{habit.name}</Text>
+                <Text style={styles.streakEmoji}>
+                  {getStreakEmoji(habit.currentStreak)}
+                </Text>
+              </View>
 
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Racha actual</Text>
-                <Text style={styles.statValue}>{habit.currentStreak} días</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>Racha actual</Text>
+                  <Text style={styles.statValue}>
+                    {habit.currentStreak} días
+                  </Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>Mejor racha</Text>
+                  <Text style={styles.statValue}>
+                    {habit.longestStreak} días
+                  </Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>Completados</Text>
+                  <Text style={styles.statValue}>{habit.totalCompletions}</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>Tasa de éxito</Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      { color: getCompletionColor(habit.completionRate) },
+                    ]}
+                  >
+                    {habit.completionRate}%
+                  </Text>
+                </View>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Mejor racha</Text>
-                <Text style={styles.statValue}>{habit.longestStreak} días</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Completados</Text>
-                <Text style={styles.statValue}>{habit.totalCompletions}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Tasa de éxito</Text>
-                <Text
-                  style={[
-                    styles.statValue,
-                    { color: getCompletionColor(habit.completionRate) },
-                  ]}
-                >
-                  {habit.completionRate}%
+
+              <View style={styles.progressSection}>
+                <Text style={styles.progressLabel}>Progreso general</Text>
+                {renderProgressBar(habit.completionRate, 100, 12)}
+                <Text style={styles.progressText}>
+                  {habit.completionRate}% completado
                 </Text>
               </View>
             </View>
-
-            <View style={styles.progressSection}>
-              <Text style={styles.progressLabel}>Progreso general</Text>
-              {renderProgressBar(habit.completionRate, 100, 12)}
-              <Text style={styles.progressText}>
-                {habit.completionRate}% completado
-              </Text>
-            </View>
-          </View>
-        ))}
+          ))
+        )}
       </View>
 
       {/* Logros */}
       <View style={styles.achievementsCard}>
         <Text style={styles.achievementsTitle}>🏆 Logros</Text>
         <View style={styles.achievementsGrid}>
-          <View style={styles.achievement}>
-            <Ionicons name="flame" size={32} color="#FF6B35" />
+          <View
+            style={[
+              styles.achievement,
+              dashboardData.currentStreak >= 7 && styles.achievementUnlocked,
+            ]}
+          >
+            <Ionicons
+              name="flame"
+              size={32}
+              color={dashboardData.currentStreak >= 7 ? "#FF6B35" : "#ccc"}
+            />
             <Text style={styles.achievementTitle}>Racha de 7 días</Text>
-            <Text style={styles.achievementDesc}>¡Completado!</Text>
+            <Text style={styles.achievementDesc}>
+              {dashboardData.currentStreak >= 7
+                ? "¡Completado!"
+                : `${dashboardData.currentStreak}/7 días`}
+            </Text>
           </View>
-          <View style={styles.achievement}>
-            <Ionicons name="trophy" size={32} color="#FFD700" />
+          <View
+            style={[
+              styles.achievement,
+              dashboardData.totalCompletions >= 50 &&
+                styles.achievementUnlocked,
+            ]}
+          >
+            <Ionicons
+              name="trophy"
+              size={32}
+              color={dashboardData.totalCompletions >= 50 ? "#FFD700" : "#ccc"}
+            />
             <Text style={styles.achievementTitle}>50 completados</Text>
-            <Text style={styles.achievementDesc}>¡Completado!</Text>
+            <Text style={styles.achievementDesc}>
+              {dashboardData.totalCompletions >= 50
+                ? "¡Completado!"
+                : `${dashboardData.totalCompletions}/50`}
+            </Text>
           </View>
-          <View style={styles.achievement}>
-            <Ionicons name="star" size={32} color="#9C27B0" />
+          <View
+            style={[
+              styles.achievement,
+              dashboardData.averageCompletionRate >= 80 &&
+                styles.achievementUnlocked,
+            ]}
+          >
+            <Ionicons
+              name="star"
+              size={32}
+              color={
+                dashboardData.averageCompletionRate >= 80 ? "#9C27B0" : "#ccc"
+              }
+            />
             <Text style={styles.achievementTitle}>80% de éxito</Text>
-            <Text style={styles.achievementDesc}>¡Completado!</Text>
+            <Text style={styles.achievementDesc}>
+              {dashboardData.averageCompletionRate >= 80
+                ? "¡Completado!"
+                : `${dashboardData.averageCompletionRate}%`}
+            </Text>
           </View>
-          <View style={[styles.achievement, styles.achievementLocked]}>
-            <Ionicons name="lock-closed" size={32} color="#ccc" />
+          <View
+            style={[
+              styles.achievement,
+              dashboardData.currentStreak >= 30 && styles.achievementUnlocked,
+            ]}
+          >
+            <Ionicons
+              name="lock-closed"
+              size={32}
+              color={dashboardData.currentStreak >= 30 ? "#4CAF50" : "#ccc"}
+            />
             <Text style={styles.achievementTitle}>Racha de 30 días</Text>
-            <Text style={styles.achievementDesc}>23/30 días</Text>
+            <Text style={styles.achievementDesc}>
+              {dashboardData.currentStreak >= 30
+                ? "¡Completado!"
+                : `${dashboardData.currentStreak}/30 días`}
+            </Text>
           </View>
         </View>
       </View>
@@ -527,6 +747,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
   },
+  achievementUnlocked: {
+    opacity: 1,
+  },
   achievementLocked: {
     opacity: 0.5,
   },
@@ -542,5 +765,61 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#666",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: "#3B82F6",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 30,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 10,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
+    textAlign: "center",
   },
 });

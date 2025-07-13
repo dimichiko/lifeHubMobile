@@ -9,6 +9,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../providers/AuthProvider";
+import { useNavigation } from "@react-navigation/native";
+import type { StackNavigationProp } from "@react-navigation/stack";
+
+type RootStackParamList = {
+  NotificationsSettings: undefined;
+  ThemeSettings: undefined;
+  Help: undefined;
+};
 import {
   GamificationService,
   UserStats,
@@ -17,6 +25,7 @@ import {
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [userStats, setUserStats] = useState<UserStats>({
     level: 1,
     experience: 0,
@@ -214,17 +223,26 @@ export default function ProfileScreen() {
       {/* Configuración */}
       <View style={styles.settingsCard}>
         <Text style={styles.sectionTitle}>⚙️ Configuración</Text>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate("NotificationsSettings")}
+        >
           <Ionicons name="notifications" size={20} color="#666" />
           <Text style={styles.settingText}>Notificaciones</Text>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate("ThemeSettings")}
+        >
           <Ionicons name="color-palette" size={20} color="#666" />
           <Text style={styles.settingText}>Tema</Text>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => navigation.navigate("Help")}
+        >
           <Ionicons name="help-circle" size={20} color="#666" />
           <Text style={styles.settingText}>Ayuda</Text>
           <Ionicons name="chevron-forward" size={20} color="#ccc" />

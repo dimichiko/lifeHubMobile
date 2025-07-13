@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,49 +9,26 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
-import { Picker } from "@react-native-picker/picker";
 import { createHabit } from "../utils/api";
 import { scheduleNotification } from "../providers/NotificationsProvider";
-
-const createHabitSchema = z.object({
-  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  frequency: z.enum(["daily", "weekly", "monthly"]),
-  reminderTime: z.string().optional(),
-  goal: z.number().min(1).max(100).optional(),
-});
-
-type CreateHabitForm = z.infer<typeof createHabitSchema>;
 
 export default function CreateHabitScreen() {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<CreateHabitForm>({
-    resolver: zodResolver(createHabitSchema),
-    defaultValues: {
-      name: "",
-      frequency: "daily",
-      reminderTime: "",
-      goal: undefined,
-    },
-  });
+  // Estados simples
+  const [name, setName] = useState("");
+  const [frequency, setFrequency] = useState("daily");
+  const [goal, setGoal] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createHabitMutation = useMutation({
     mutationFn: createHabit,
     onSuccess: () => {
       Alert.alert("Éxito", "Hábito creado correctamente");
       queryClient.invalidateQueries({ queryKey: ["habits"] });
-      reset();
       navigation.goBack();
     },
     onError: (error: any) => {
@@ -59,40 +36,24 @@ export default function CreateHabitScreen() {
     },
   });
 
-  const onSubmit = async (data: CreateHabitForm) => {
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "El nombre del hábito es obligatorio");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       // Crear el hábito
       await createHabitMutation.mutateAsync({
-        name: data.name,
-        frequency: data.frequency,
-        reminderTime: data.reminderTime,
-        goal: data.goal || undefined,
+        name: name.trim(),
+        frequency,
+        goal: goal ? parseInt(goal) : undefined,
       });
-
-      // Programar notificación si se especificó hora de recordatorio
-      if (data.reminderTime) {
-        const [hours, minutes] = data.reminderTime.split(":").map(Number);
-        const now = new Date();
-        const reminderTime = new Date();
-        reminderTime.setHours(hours, minutes, 0, 0);
-
-        // Si la hora ya pasó hoy, programar para mañana
-        if (reminderTime <= now) {
-          reminderTime.setDate(reminderTime.getDate() + 1);
-        }
-
-        await scheduleNotification(
-          `Recordatorio: ${data.name}`,
-          `¡Es hora de completar tu hábito "${data.name}"!`,
-          {
-            hour: hours,
-            minute: minutes,
-            repeats: true,
-          } as any,
-        );
-      }
     } catch (error) {
       // El error ya se maneja en la mutación
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -104,89 +65,84 @@ export default function CreateHabitScreen() {
         {/* Nombre del hábito */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Nombre del hábito *</Text>
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[styles.input, errors.name && styles.inputError]}
-                placeholder="Ej: Beber agua, Hacer ejercicio..."
-                onChangeText={onChange}
-                onBlur={onBlur}
-                value={value}
-              />
-            )}
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: Beber agua, Hacer ejercicio..."
+            value={name}
+            onChangeText={setName}
           />
-          {errors.name && (
-            <Text style={styles.errorText}>{errors.name.message}</Text>
-          )}
         </View>
 
         {/* Frecuencia */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Frecuencia *</Text>
-          <Controller
-            control={control}
-            name="frequency"
-            render={({ field: { onChange, value } }) => (
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={value}
-                  onValueChange={onChange}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Diario" value="daily" />
-                  <Picker.Item label="Semanal" value="weekly" />
-                  <Picker.Item label="Mensual" value="monthly" />
-                </Picker>
-              </View>
-            )}
-          />
+          <View style={styles.frequencyContainer}>
+            <TouchableOpacity
+              style={[
+                styles.frequencyButton,
+                frequency === "daily" && styles.frequencyButtonActive,
+              ]}
+              onPress={() => setFrequency("daily")}
+            >
+              <Text
+                style={[
+                  styles.frequencyButtonText,
+                  frequency === "daily" && styles.frequencyButtonTextActive,
+                ]}
+              >
+                Diario
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.frequencyButton,
+                frequency === "weekly" && styles.frequencyButtonActive,
+              ]}
+              onPress={() => setFrequency("weekly")}
+            >
+              <Text
+                style={[
+                  styles.frequencyButtonText,
+                  frequency === "weekly" && styles.frequencyButtonTextActive,
+                ]}
+              >
+                Semanal
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.frequencyButton,
+                frequency === "monthly" && styles.frequencyButtonActive,
+              ]}
+              onPress={() => setFrequency("monthly")}
+            >
+              <Text
+                style={[
+                  styles.frequencyButtonText,
+                  frequency === "monthly" && styles.frequencyButtonTextActive,
+                ]}
+              >
+                Mensual
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Meta opcional */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Meta (opcional)</Text>
-          <Controller
-            control={control}
-            name="goal"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Ej: 8 vasos de agua"
-                onChangeText={(text) =>
-                  onChange(text ? parseInt(text) : undefined)
-                }
-                onBlur={onBlur}
-                value={value?.toString() || ""}
-                keyboardType="numeric"
-              />
-            )}
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: 8 vasos de agua"
+            value={goal}
+            onChangeText={setGoal}
+            keyboardType="numeric"
           />
         </View>
-
-        {/* Hora de recordatorio opcional */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hora de recordatorio (opcional)</Text>
-          <Controller
-            control={control}
-            name="reminderTime"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Ej: 08:00"
-                onChangeText={onChange}
-                onBlur={onBlur}
-                value={value}
-              />
-            )}
-          />
-        </View>
-
         {/* Botón de crear */}
         <TouchableOpacity
           style={[styles.button, isSubmitting && styles.buttonDisabled]}
-          onPress={handleSubmit(onSubmit)}
+          onPress={handleSubmit}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -243,22 +199,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
   },
-  inputError: {
-    borderColor: "#ff6b6b",
+  frequencyContainer: {
+    flexDirection: "row",
+    gap: 8,
   },
-  pickerContainer: {
+  frequencyButton: {
+    flex: 1,
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
+    padding: 12,
+    alignItems: "center",
     backgroundColor: "#fff",
   },
-  picker: {
-    height: 50,
+  frequencyButtonActive: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
   },
-  errorText: {
-    color: "#ff6b6b",
+  frequencyButtonText: {
     fontSize: 14,
+    fontWeight: "500",
+    color: "#666",
+  },
+  frequencyButtonTextActive: {
+    color: "#fff",
+  },
+  hint: {
+    fontSize: 12,
+    color: "#666",
     marginTop: 4,
+    fontStyle: "italic",
   },
   button: {
     backgroundColor: "#007AFF",

@@ -14,6 +14,29 @@ const CreateHabitScreen = lazy(() => import("../screens/CreateHabitScreen"));
 const EditHabitScreen = lazy(() => import("../screens/EditHabitScreen"));
 const DashboardScreen = lazy(() => import("../screens/DashboardScreen"));
 const ProfileScreen = lazy(() => import("../screens/ProfileScreen"));
+const NotificationsSettingsScreen = lazy(
+  () => import("../screens/NotificationsSettingsScreen"),
+);
+const ThemeSettingsScreen = lazy(
+  () => import("../screens/ThemeSettingsScreen"),
+);
+const HelpScreen = lazy(() => import("../screens/HelpScreen"));
+const HowToCreateHabitScreen = lazy(
+  () => import("../screens/help/HowToCreateHabitScreen"),
+);
+const PointsSystemScreen = lazy(
+  () => import("../screens/help/PointsSystemScreen"),
+);
+const AchievementsScreen = lazy(
+  () => import("../screens/help/AchievementsScreen"),
+);
+const StreaksScreen = lazy(() => import("../screens/help/StreaksScreen"));
+const ContactScreen = lazy(() => import("../screens/help/ContactScreen"));
+const SupportScreen = lazy(() => import("../screens/help/SupportScreen"));
+const SuggestionsScreen = lazy(
+  () => import("../screens/help/SuggestionsScreen"),
+);
+const BugReportScreen = lazy(() => import("../screens/help/BugReportScreen"));
 
 // Loading component for lazy screens
 const ScreenLoader = () => (
@@ -117,6 +140,138 @@ const AppStack = () => (
       options={{
         title: "Editar Hábito",
         presentation: "modal",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="NotificationsSettings"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <NotificationsSettingsScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Notificaciones",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="ThemeSettings"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <ThemeSettingsScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Tema",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="Help"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <HelpScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Ayuda",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="HowToCreateHabit"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <HowToCreateHabitScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "¿Cómo crear un hábito?",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="PointsSystem"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <PointsSystemScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Sistema de Puntos",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="Achievements"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <AchievementsScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Logros y Recompensas",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="Streaks"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <StreaksScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Rachas y Streaks",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="Contact"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <ContactScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Contacto y Soporte",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="Support"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <SupportScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Soporte Técnico",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="Suggestions"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <SuggestionsScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Sugerencias",
+        headerShown: true,
+      }}
+    />
+    <Stack.Screen
+      name="BugReport"
+      component={(props) => (
+        <Suspense fallback={<ScreenLoader />}>
+          <BugReportScreen {...props} />
+        </Suspense>
+      )}
+      options={{
+        title: "Reportar Bug",
         headerShown: true,
       }}
     />
