@@ -7,13 +7,25 @@
     "dev:api": "cd apps/api && pnpm run start:dev",
     "dev:mobile": "cd apps/mobile && pnpm start",
     "build:api": "cd apps/api && pnpm run build",
+    "test": "echo 'No tests configured for root package'",
+    "lint": "echo 'No linting configured for root package'",
+    "lint-staged": "echo 'No lint-staged configured for root package'",
+    "format:check": "echo 'No format check configured for root package'",
     "test:api": "cd apps/api && pnpm run test",
     "db:generate": "cd apps/api && npx prisma generate",
     "db:push": "cd apps/api && npx prisma db push",
     "db:seed": "cd apps/api && npx prisma db seed"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
-    "prisma": "6.11.1"
+    "prisma": "6.11.1",
+    "tsx": "^4.20.3"
+  },
+  "dependencies": {
+    "@prisma/client": "6.11.1",
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^6.0.0",
+    "metro-runtime": "^0.83.0"
   }
 }

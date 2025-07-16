@@ -5,6 +5,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
+/// @seed="npx tsx prisma/seed.ts"
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")

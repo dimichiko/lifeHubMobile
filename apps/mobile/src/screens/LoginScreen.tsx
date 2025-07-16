@@ -21,9 +21,12 @@ export default function LoginScreen({ navigation }: any) {
     }
 
     try {
+      console.log("Intentando login con:", { email, password });
       await login(email, password);
+      console.log("Login exitoso");
     } catch (error) {
-      Alert.alert("Error", "Credenciales inválidas");
+      console.error("Error en login:", error);
+      Alert.alert("Error", `Error de conexión: ${error.message || 'Desconocido'}`);
     }
   };
 

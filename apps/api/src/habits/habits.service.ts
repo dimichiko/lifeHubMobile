@@ -14,8 +14,7 @@ export class HabitsService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, createHabitDto: CreateHabitDto) {
-    const { name, frequency, reminderAt, goal, isRecurring, daysOfWeek } =
-      createHabitDto;
+    const { name, frequency, reminderAt, goal } = createHabitDto;
 
     return this.prisma.habit.create({
       data: {
@@ -23,8 +22,6 @@ export class HabitsService {
         frequency,
         reminderAt: reminderAt ? new Date(reminderAt) : null,
         goal,
-        isRecurring: isRecurring || false,
-        daysOfWeek: daysOfWeek || [],
         userId,
       },
     });
@@ -37,7 +34,7 @@ export class HabitsService {
         archived: false,
       },
       include: {
-        logs: {
+        habitLogs: {
           orderBy: {
             date: 'desc',
           },
@@ -48,7 +45,7 @@ export class HabitsService {
 
     // Calcular streak y isDoneToday para cada hábito
     const habitsWithStreak = habits.map((habit) => {
-      const { streak, isDoneToday } = this.calculateStreak(habit.logs);
+      const { streak, isDoneToday } = this.calculateStreak(habit.habitLogs);
       return {
         ...habit,
         streak,
@@ -105,7 +102,7 @@ export class HabitsService {
         userId,
       },
       include: {
-        logs: {
+        habitLogs: {
           orderBy: {
             date: 'desc',
           },
@@ -130,8 +127,7 @@ export class HabitsService {
       throw new NotFoundException('Habit not found');
     }
 
-    const { name, frequency, reminderAt, goal, isRecurring, daysOfWeek } =
-      updateHabitDto;
+    const { name, frequency, reminderAt, goal } = updateHabitDto;
 
     return this.prisma.habit.update({
       where: { id },
@@ -140,8 +136,6 @@ export class HabitsService {
         frequency,
         reminderAt: reminderAt ? new Date(reminderAt) : null,
         goal,
-        isRecurring,
-        daysOfWeek,
       },
     });
   }

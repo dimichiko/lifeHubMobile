@@ -39,6 +39,11 @@ export class HabitsController {
     return this.habitsService.findAll(user.userId);
   }
 
+  @Get('habit-logs')
+  findAllLogs(@CurrentUser() user: JwtPayload) {
+    return this.habitsService.findAllLogs(user.userId);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.habitsService.findOne(user.userId, id);
@@ -64,10 +69,5 @@ export class HabitsController {
     @Body() createHabitLogDto: CreateHabitLogDto,
   ) {
     return this.habitsService.createLog(user.userId, createHabitLogDto);
-  }
-
-  @Get('habit-logs')
-  findAllLogs(@CurrentUser() user: JwtPayload) {
-    return this.habitsService.findAllLogs(user.userId);
   }
 }

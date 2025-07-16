@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import { useMutation } from "@tanstack/react-query";
-import { api } from "../utils/api";
+import { api, login as apiLogin, register as apiRegister } from "../utils/api";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface User {
@@ -67,16 +67,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       email: string;
       password: string;
     }) => {
-      const response = await api.post("/auth/login", { email, password });
-      return response.data;
+      return await apiLogin({ email, password });
     },
     onSuccess: async (data) => {
+      console.log("Login exitoso, datos recibidos:", data);
       const { user: userData, token: tokenData } = data;
       setUser(userData);
       setToken(tokenData);
       await SecureStore.setItemAsync("token", tokenData);
       await SecureStore.setItemAsync("user", JSON.stringify(userData));
       queryClient.setQueryData(["me"], userData);
+    },
+    onError: (error: any) => {
+      console.error("Error en login mutation:", error);
+      console.error("Error response:", error?.response?.data);
+      throw error;
     },
   });
 
@@ -91,12 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       email: string;
       password: string;
     }) => {
-      const response = await api.post("/auth/register", {
-        name,
-        email,
-        password,
-      });
-      return response.data;
+      return await apiRegister({ name, email, password });
     },
     onSuccess: async (data) => {
       const { user: userData, token } = data;

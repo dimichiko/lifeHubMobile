@@ -1,511 +1,455 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  Alert, 
+  FlatList, 
+  RefreshControl, 
+  Animated, 
   StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Alert,
+  Dimensions,
+  StatusBar
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../providers/AuthProvider";
 import { useNavigation } from "@react-navigation/native";
+import HabitCard from "../components/HabitCard";
 import { api } from "../utils/api";
+import { LinearGradient } from "expo-linear-gradient";
+import { Svg, Path, Circle } from "react-native-svg";
+
+const { width, height } = Dimensions.get("window");
 
 interface Habit {
   id: string;
   name: string;
   description: string;
-  isRecurring: boolean;
-  daysOfWeek: string[];
+  frequency: string;
+  streak: number;
+  isDoneToday: boolean;
+  category: string;
   createdAt: string;
+  logs: Array<{
+    id: string;
+    date: string;
+  }>;
 }
 
-type RootStackParamList = {
-  CreateHabit: undefined;
-  Habits: undefined;
-  EditHabit: { habitId: string };
-};
+interface HabitLog {
+  id: string;
+  habitId: string;
+  completedAt: string;
+}
 
-export default function HomeScreen() {
-  const { user, logout } = useAuth();
-  const navigation = useNavigation<any>();
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({
-    totalHabits: 0,
-    completedToday: 0,
-    streak: 0,
-  });
+interface DashboardData {
+  habits: Habit[];
+  habitLogs: HabitLog[];
+  totalHabits: number;
+  completedToday: number;
+  currentStreak: number;
+  totalPoints: number;
+}
 
-  const fetchHabits = async () => {
+const HomeScreen = () => {
+  const { user } = useAuth();
+  const navigation = useNavigation();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [fabScale] = useState(new Animated.Value(1));
+  const [headerOpacity] = useState(new Animated.Value(0));
+  const [listOpacity] = useState(new Animated.Value(0));
+
+  // Animaciones de entrada
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(listOpacity, {
+        toValue: 1,
+        duration: 1000,
+        delay: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get("/habits");
-      setHabits(response.data);
-      setStats({
-        totalHabits: response.data.length,
-        completedToday: response.data.filter((h: any) => h.completedToday)
-          .length,
-        streak: 7, // Placeholder - implementar lógica real
-      });
-    } catch (error: any) {
-      console.error("Error fetching habits:", error);
-      // Si es error 401, el usuario no está autenticado
-      if (error.response?.status === 401) {
-        console.log("Usuario no autenticado, redirigiendo a login");
-        // No hacer nada, el AuthProvider manejará la redirección
-      }
+      const response = await api.get("/habits/habit-logs");
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      Alert.alert("Error", "No se pudo cargar el dashboard");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+  }, [fetchDashboardData]);
 
   useEffect(() => {
-    if (user) {
-      fetchHabits();
-    }
-  }, [user]);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Cerrar sesión",
-      "¿Estás seguro de que quieres cerrar sesión?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Cerrar sesión", style: "destructive", onPress: logout },
-      ],
+  const handleHabitToggle = useCallback(async (habitId: string, completed: boolean) => {
+    try {
+      if (completed) {
+        await api.post("/habits/habit-logs", { habitId });
+      } else {
+        // Implementar lógica para desmarcar si es necesario
+      }
+      await fetchDashboardData();
+    } catch (error) {
+      console.error("Error toggling habit:", error);
+      Alert.alert("Error", "No se pudo actualizar el hábito");
+    }
+  }, [fetchDashboardData]);
+
+  const handleFabPress = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(fabScale, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fabScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    navigation.navigate("CreateHabit" as never);
+  }, [fabScale, navigation]);
+
+  const renderHabitCard = useCallback(({ item }: { item: Habit }) => (
+    <HabitCard
+      habit={item}
+    />
+  ), []);
+
+  const keyExtractor = useCallback((item: Habit) => item.id, []);
+
+  const MiniChart = () => {
+    const data = [65, 80, 45, 90, 75, 85, 70];
+    const maxValue = Math.max(...data);
+    const chartWidth = width - 80;
+    const chartHeight = 60;
+    const barWidth = chartWidth / data.length - 4;
+
+    return (
+      <View style={styles.miniChartContainer}>
+        <Svg width={chartWidth} height={chartHeight}>
+          {data.map((value, index) => {
+            const barHeight = (value / maxValue) * chartHeight;
+            const x = index * (barWidth + 4);
+            const y = chartHeight - barHeight;
+            
+            return (
+              <Path
+                key={index}
+                d={`M ${x} ${chartHeight} L ${x} ${y} L ${x + barWidth} ${y} L ${x + barWidth} ${chartHeight} Z`}
+                fill="url(#gradient)"
+                stroke="#4A90E2"
+                strokeWidth="1"
+              />
+            );
+          })}
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#4A90E2" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#4A90E2" stopOpacity="0.3" />
+            </linearGradient>
+          </defs>
+        </Svg>
+      </View>
     );
   };
 
-  const getDayName = (day: string) => {
-    const days: { [key: string]: string } = {
-      monday: "Lun",
-      tuesday: "Mar",
-      wednesday: "Mié",
-      thursday: "Jue",
-      friday: "Vie",
-      saturday: "Sáb",
-      sunday: "Dom",
-    };
-    return days[day] || day;
+  const MotivationalQuote = () => {
+    const quotes = [
+      "Cada día es una nueva oportunidad para ser mejor",
+      "Los pequeños pasos llevan a grandes cambios",
+      "La consistencia es la clave del éxito",
+      "Hoy es el día perfecto para empezar",
+      "Tú eres más fuerte de lo que crees"
+    ];
+    
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    
+    return (
+      <View style={styles.quoteContainer}>
+        <Text style={styles.quoteText}>"{randomQuote}"</Text>
+      </View>
+    );
   };
 
-  const getCurrentDate = () => {
-    const today = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return today.toLocaleDateString("es-ES", options);
-  };
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.skeletonHeader} />
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={fetchHabits} />
-        }
-      >
-        {/* Header mejorado */}
-        <View style={styles.header}>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+      
+      {/* Header con gradiente */}
+      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+        <LinearGradient
+          colors={["#16213e", "#0f3460"]}
+          style={styles.headerGradient}
+        >
           <View style={styles.headerContent}>
-            <Text style={styles.greeting}>
-              ¡Hola, {user?.name || "Usuario"}!
-            </Text>
-            <Text style={styles.date}>Hoy es {getCurrentDate()}</Text>
-          </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Métricas unificadas */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>📊 Resumen de hoy</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>🎯</Text>
-              <Text style={styles.statLabel}>Hábitos activos</Text>
-              <Text style={styles.statValue}>{stats.totalHabits}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>✅</Text>
-              <Text style={styles.statLabel}>Completados hoy</Text>
-              <Text style={styles.statValue}>{stats.completedToday}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>🔥</Text>
-              <Text style={styles.statLabel}>Racha más larga</Text>
-              <Text style={styles.statValue}>{stats.streak} días</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Nueva tarjeta de acciones */}
-        <View style={styles.actionsCard}>
-          <Text style={styles.actionsTitle}>¿Qué quieres hacer hoy?</Text>
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => navigation.navigate("CreateHabit")}
-            >
-              <Ionicons name="add-circle" size={24} color="#4CAF50" />
-              <Text style={styles.actionText}>Crear nuevo hábito</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => navigation.navigate("Habits")}
-            >
-              <Ionicons name="eye" size={24} color="#2196F3" />
-              <Text style={styles.actionText}>Ver mis hábitos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => navigation.navigate("Dashboard")}
-            >
-              <Ionicons name="trending-up" size={24} color="#FF9800" />
-              <Text style={styles.actionText}>Ver mi progreso</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Hábitos recientes */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Hábitos Recientes</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Habits")}>
-              <Text style={styles.seeAllText}>Ver todos</Text>
-            </TouchableOpacity>
-          </View>
-
-          {habits.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🪴</Text>
-              <Text style={styles.emptyTitle}>Aún no tienes hábitos</Text>
-              <Text style={styles.emptySubtext}>
-                Comienza con uno pequeño. Los grandes cambios empiezan con pasos
-                simples.
+            <View>
+              <Text style={styles.greeting}>
+                ¡Hola, {user?.name?.split(" ")[0] || "Usuario"}!
               </Text>
-              <TouchableOpacity
-                style={styles.createFirstButton}
-                onPress={() => navigation.navigate("CreateHabit")}
-              >
-                <Text style={styles.createFirstText}>
-                  📋 Crear mi primer hábito
-                </Text>
-              </TouchableOpacity>
+              <Text style={styles.subtitle}>
+                {dashboardData?.completedToday || 0} de {dashboardData?.totalHabits || 0} hábitos completados hoy
+              </Text>
             </View>
-          ) : (
-            habits.slice(0, 3).map((habit) => (
-              <TouchableOpacity
-                key={habit.id}
-                style={styles.habitCard}
-                onPress={() =>
-                  navigation.navigate("EditHabit", { habitId: habit.id })
-                }
-              >
-                <View style={styles.habitInfo}>
-                  <Text style={styles.habitName}>{habit.name}</Text>
-                  <Text style={styles.habitDescription} numberOfLines={2}>
-                    {habit.description}
-                  </Text>
-                  {habit.isRecurring && (
-                    <View style={styles.daysContainer}>
-                      {habit.daysOfWeek.map((day, index) => (
-                        <View key={index} style={styles.dayChip}>
-                          <Text style={styles.dayText}>{getDayName(day)}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-
-        {/* Motivación */}
-        <View style={styles.motivationContainer}>
-          <View style={styles.motivationCard}>
-            <Ionicons name="bulb-outline" size={32} color="#fff" />
-            <Text style={styles.motivationText}>
-              "Los pequeños hábitos diarios son la clave del éxito"
-            </Text>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{dashboardData?.currentStreak || 0}</Text>
+                <Text style={styles.statLabel}>Días</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{dashboardData?.totalPoints || 0}</Text>
+                <Text style={styles.statLabel}>Puntos</Text>
+              </View>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </LinearGradient>
+      </Animated.View>
 
-      {/* FAB - Botón flotante */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate("CreateHabit")}
-      >
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
+      {/* Contenido principal */}
+      <Animated.View style={[styles.content, { opacity: listOpacity }]}>
+        {/* Frase motivacional */}
+        <MotivationalQuote />
+        
+        {/* Mini gráfico */}
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionTitle}>Progreso Semanal</Text>
+          <MiniChart />
+        </View>
+
+        {/* Lista de hábitos */}
+        <View style={styles.habitsSection}>
+          <Text style={styles.sectionTitle}>Tus Hábitos</Text>
+          <FlatList
+            data={dashboardData?.habits || []}
+            renderItem={renderHabitCard}
+            keyExtractor={keyExtractor}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.habitsList}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#4A90E2"
+                colors={["#4A90E2"]}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Ionicons name="leaf-outline" size={64} color="#ccc" />
+                <Text style={styles.emptyText}>No tienes hábitos aún</Text>
+                <Text style={styles.emptySubtext}>
+                  Toca el botón + para crear tu primer hábito
+                </Text>
+              </View>
+            }
+          />
+        </View>
+      </Animated.View>
+
+      {/* FAB */}
+      <Animated.View style={[styles.fabContainer, { transform: [{ scale: fabScale }] }]}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={handleFabPress}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={["#4A90E2", "#357ABD"]}
+            style={styles.fabGradient}
+          >
+            <Ionicons name="add" size={28} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
   },
-  scrollView: {
+  loadingContainer: {
     flex: 1,
+    backgroundColor: "#f8f9fa",
+    padding: 20,
+  },
+  skeletonHeader: {
+    height: 120,
+    backgroundColor: "#e9ecef",
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+  skeletonCard: {
+    height: 100,
+    backgroundColor: "#e9ecef",
+    borderRadius: 12,
+    marginBottom: 16,
   },
   header: {
-    backgroundColor: "#3B82F6",
+    height: 200,
+  },
+  headerGradient: {
+    flex: 1,
     paddingTop: 60,
-    paddingBottom: 30,
     paddingHorizontal: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    paddingBottom: 20,
   },
   headerContent: {
     flex: 1,
+    justifyContent: "space-between",
   },
   greeting: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#fff",
+    color: "white",
     marginBottom: 8,
   },
-  date: {
+  subtitle: {
     fontSize: 16,
-    color: "#fff",
-    opacity: 0.9,
-    textTransform: "capitalize",
+    color: "rgba(255, 255, 255, 0.8)",
   },
-  logoutButton: {
-    padding: 8,
-  },
-  statsCard: {
-    backgroundColor: "#fff",
-    margin: 20,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  statsTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  statsRow: {
+  statsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
+    marginTop: 20,
   },
   statItem: {
     alignItems: "center",
-    flex: 1,
   },
   statNumber: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "white",
   },
   statLabel: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 4,
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginTop: 4,
   },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    marginTop: -20,
   },
-  actionsCard: {
-    backgroundColor: "#fff",
-    marginHorizontal: 20,
-    marginBottom: 20,
+  quoteContainer: {
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 16,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 4,
-  },
-  actionsTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  actionButtons: {
-    gap: 12,
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-  },
-  actionText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 12,
-    fontWeight: "500",
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 30,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: "#3B82F6",
-    fontWeight: "600",
-  },
-  emptyState: {
-    backgroundColor: "#fff",
-    padding: 40,
-    borderRadius: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 24,
-  },
-  createFirstButton: {
-    backgroundColor: "#3B82F6",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  createFirstText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  habitCard: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 3,
   },
-  habitInfo: {
-    flex: 1,
-  },
-  habitName: {
+  quoteText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
+    fontStyle: "italic",
+    color: "#495057",
+    textAlign: "center",
+    lineHeight: 24,
   },
-  habitDescription: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  daysContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  dayChip: {
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 5,
-    marginBottom: 5,
-  },
-  dayText: {
-    fontSize: 10,
-    color: "#666",
-    fontWeight: "500",
-  },
-  motivationContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 30,
-  },
-  motivationCard: {
-    backgroundColor: "#FF6B6B",
+  chartSection: {
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 16,
-    alignItems: "center",
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
   },
-  motivationText: {
-    color: "#fff",
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#212529",
+    marginBottom: 16,
+  },
+  miniChartContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 80,
+  },
+  habitsSection: {
+    flex: 1,
+  },
+  habitsList: {
+    paddingBottom: 100,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#6c757d",
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#adb5bd",
     textAlign: "center",
-    marginTop: 10,
-    fontStyle: "italic",
+    marginTop: 8,
   },
-  fab: {
+  fabContainer: {
     position: "absolute",
     bottom: 30,
-    right: 30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#3B82F6",
-    justifyContent: "center",
-    alignItems: "center",
+    right: 20,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
+  fabGradient: {
+    flex: 1,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
+
+export default HomeScreen;

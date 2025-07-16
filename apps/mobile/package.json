@@ -34,6 +34,8 @@
     "react-native": "0.79.5",
     "react-native-safe-area-context": "^5.5.1",
     "react-native-screens": "^4.11.1",
+    "react-native-svg": "15.11.2",
+    "styled-components": "^6.1.19",
     "zod": "^3.25.75"
   },
   "devDependencies": {
@@ -43,7 +45,9 @@
     "@types/react": "~19.0.14",
     "detox": "^20.40.1",
     "jest": "^29.7.0",
-    "jest-circus": "^30.0.4"
+    "jest-circus": "^30.0.4",
+    "metro-runtime": "^0.83.0",
+    "typescript": "~5.8.3"
   },
   "private": true
 }

@@ -1,14 +1,29 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2017",
+    "types": ["jest", "node"],
     "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
     "skipLibCheck": true,
+    "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "dist"
-  },
-  "include": [
-    "prisma/seed.ts"
-  ]
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "moduleResolution": "node",
+    "useDefineForClassFields": false,
+    "paths": {
+      "@prisma/client": ["../../node_modules/@prisma/client"]
+    },
+    "typeRoots": ["./node_modules/@types"]
+  }
 } 

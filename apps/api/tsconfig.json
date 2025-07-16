@@ -17,6 +17,12 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
+    "moduleResolution": "node",
+    "useDefineForClassFields": false,
+    "types": ["node", "jest"],
+    "paths": {
+      "@prisma/client": ["../../node_modules/@prisma/client"]
+    },
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   }
 }

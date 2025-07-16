@@ -5,7 +5,7 @@ import Constants from "expo-constants";
 // Get API URL from Expo config or environment
 const getApiUrl = () => {
   // Forzar IP local para emulador iOS/Mac
-  return "http://192.168.0.14:3000"; // Cambia esta IP si tu red es diferente
+  return "http://192.168.0.8:3000"; // Cambia esta IP si tu red es diferente
 };
 
 // Create axios instance

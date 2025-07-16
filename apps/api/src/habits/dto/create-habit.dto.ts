@@ -2,8 +2,6 @@ import {
   IsString,
   IsOptional,
   IsNumber,
-  IsBoolean,
-  IsArray,
 } from 'class-validator';
 
 export class CreateHabitDto {
@@ -20,13 +18,4 @@ export class CreateHabitDto {
   @IsOptional()
   @IsNumber()
   goal?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  isRecurring?: boolean;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  daysOfWeek?: string[];
 }

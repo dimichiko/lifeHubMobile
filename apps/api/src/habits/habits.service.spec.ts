@@ -45,8 +45,7 @@ describe('HabitsService', () => {
       const createHabitDto: CreateHabitDto = {
         name: 'Test Habit',
         frequency: 'daily',
-        isRecurring: true,
-        daysOfWeek: ['monday', 'wednesday', 'friday'],
+        goal: 5,
       };
 
       const expectedHabit = {
@@ -67,9 +66,6 @@ describe('HabitsService', () => {
           ...createHabitDto,
           userId,
           reminderAt: null,
-          goal: undefined,
-          isRecurring: true,
-          daysOfWeek: ['monday', 'wednesday', 'friday'],
         },
       });
       expect(result).toEqual(expectedHabit);
@@ -80,8 +76,7 @@ describe('HabitsService', () => {
       const createHabitDto: CreateHabitDto = {
         name: 'One-time Habit',
         frequency: 'weekly',
-        isRecurring: false,
-        daysOfWeek: [],
+        reminderAt: '09:00',
       };
 
       const expectedHabit = {
@@ -109,11 +104,10 @@ describe('HabitsService', () => {
           id: '1',
           name: 'Habit 1',
           frequency: 'daily',
-          isRecurring: true,
-          daysOfWeek: ['monday'],
+          goal: 5,
           userId,
           archived: false,
-          logs: [],
+          habitLogs: [],
           streak: 0,
           isDoneToday: false,
         },
@@ -121,11 +115,10 @@ describe('HabitsService', () => {
           id: '2',
           name: 'Habit 2',
           frequency: 'weekly',
-          isRecurring: false,
-          daysOfWeek: [],
+          reminderAt: '09:00',
           userId,
           archived: false,
-          logs: [],
+          habitLogs: [],
           streak: 0,
           isDoneToday: false,
         },
@@ -141,7 +134,7 @@ describe('HabitsService', () => {
           archived: false,
         },
         include: {
-          logs: {
+          habitLogs: {
             orderBy: {
               date: 'desc',
             },
@@ -170,11 +163,10 @@ describe('HabitsService', () => {
         id: '1',
         name: 'Test Habit',
         frequency: 'daily',
-        isRecurring: true,
-        daysOfWeek: ['monday'],
+        goal: 3,
         userId,
         archived: false,
-        logs: [],
+        habitLogs: [],
       };
 
       mockPrismaService.habit.findFirst.mockResolvedValue(expectedHabit);
@@ -187,7 +179,7 @@ describe('HabitsService', () => {
           userId,
         },
         include: {
-          logs: {
+          habitLogs: {
             orderBy: {
               date: 'desc',
             },
@@ -215,8 +207,7 @@ describe('HabitsService', () => {
       const updateHabitDto: UpdateHabitDto = {
         name: 'Updated Habit',
         frequency: 'weekly',
-        isRecurring: false,
-        daysOfWeek: [],
+        goal: 3,
       };
 
       const existingHabit = {
@@ -244,7 +235,6 @@ describe('HabitsService', () => {
         data: {
           ...updateHabitDto,
           reminderAt: null,
-          goal: undefined,
         },
       });
       expect(result).toEqual(expectedHabit);
