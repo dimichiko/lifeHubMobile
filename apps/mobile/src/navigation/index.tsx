@@ -4,6 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useAuth } from "../providers/AuthProvider";
 import { View, Text, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // Lazy loaded screens
 const LoginScreen = lazy(() => import("../screens/LoginScreen"));
@@ -156,11 +157,85 @@ const AuthStack = () => (
 
 // App Tabs (Home/Habits/Dashboard/Profile)
 const AppTabs = () => (
-  <Tab.Navigator {...({} as any)}>
-    <Tab.Screen name="Home" component={HomeScreenWrapper} />
-    <Tab.Screen name="Habits" component={HabitsScreenWrapper} />
-    <Tab.Screen name="Dashboard" component={DashboardScreenWrapper} />
-    <Tab.Screen name="Profile" component={ProfileScreenWrapper} />
+  <Tab.Navigator
+    screenOptions={({ route }) => ({
+      tabBarIcon: ({ focused, color, size }) => {
+        let iconName: keyof typeof Ionicons.glyphMap;
+
+        if (route.name === 'Home') {
+          iconName = focused ? 'home' : 'home-outline';
+        } else if (route.name === 'Habits') {
+          iconName = focused ? 'list' : 'list-outline';
+        } else if (route.name === 'Dashboard') {
+          iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+        } else if (route.name === 'Profile') {
+          iconName = focused ? 'person' : 'person-outline';
+        } else {
+          iconName = 'help-outline';
+        }
+
+        return (
+          <Ionicons 
+            name={iconName} 
+            size={focused ? size * 1.2 : size} 
+            color={focused ? '#407BFF' : color} 
+          />
+        );
+      },
+      tabBarActiveTintColor: '#407BFF',
+      tabBarInactiveTintColor: '#8E8E93',
+      tabBarStyle: {
+        backgroundColor: 'white',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E5EA',
+        paddingBottom: 8,
+        paddingTop: 8,
+        height: 88,
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: -2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 8,
+      },
+      tabBarLabelStyle: {
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 4,
+      },
+      headerShown: false,
+    })}
+  >
+    <Tab.Screen 
+      name="Home" 
+      component={HomeScreenWrapper}
+      options={{
+        tabBarLabel: 'Inicio',
+      }}
+    />
+    <Tab.Screen 
+      name="Habits" 
+      component={HabitsScreenWrapper}
+      options={{
+        tabBarLabel: 'Hábitos',
+      }}
+    />
+    <Tab.Screen 
+      name="Dashboard" 
+      component={DashboardScreenWrapper}
+      options={{
+        tabBarLabel: 'Dashboard',
+      }}
+    />
+    <Tab.Screen 
+      name="Profile" 
+      component={ProfileScreenWrapper}
+      options={{
+        tabBarLabel: 'Perfil',
+      }}
+    />
   </Tab.Navigator>
 );
 
