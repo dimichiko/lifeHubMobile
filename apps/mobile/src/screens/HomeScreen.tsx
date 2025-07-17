@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import HabitCard from "../components/HabitCard";
 import { api } from "../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
-import { Svg, Path, Circle } from "react-native-svg";
+import { Svg, Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
 
 const { width, height } = Dimensions.get("window");
 
@@ -165,12 +165,12 @@ const HomeScreen = () => {
               />
             );
           })}
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#4A90E2" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#4A90E2" stopOpacity="0.3" />
-            </linearGradient>
-          </defs>
+          <Defs>
+            <SvgLinearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <Stop offset="0%" stopColor="#4A90E2" stopOpacity="0.8" />
+              <Stop offset="100%" stopColor="#4A90E2" stopOpacity="0.3" />
+            </SvgLinearGradient>
+          </Defs>
         </Svg>
       </View>
     );
