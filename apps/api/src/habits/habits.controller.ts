@@ -44,6 +44,11 @@ export class HabitsController {
     return this.habitsService.findAllLogs(user.userId);
   }
 
+  @Get('dashboard')
+  getDashboard(@CurrentUser() user: JwtPayload) {
+    return this.habitsService.getDashboard(user.userId);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.habitsService.findOne(user.userId, id);

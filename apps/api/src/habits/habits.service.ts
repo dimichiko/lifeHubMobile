@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { UpdateHabitDto } from './dto/update-habit.dto';
@@ -18,11 +14,11 @@ export class HabitsService {
 
     return this.prisma.habit.create({
       data: {
+        userId,
         name,
         frequency,
         reminderAt: reminderAt ? new Date(reminderAt) : null,
         goal,
-        userId,
       },
     });
   }
@@ -38,13 +34,15 @@ export class HabitsService {
           orderBy: {
             date: 'desc',
           },
-          take: 30, // últimos 30 logs
         },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
-    // Calcular streak y isDoneToday para cada hábito
-    const habitsWithStreak = habits.map((habit) => {
+    // Calcular streak e isDoneToday para cada hábito
+    return habits.map(habit => {
       const { streak, isDoneToday } = this.calculateStreak(habit.habitLogs);
       return {
         ...habit,
@@ -52,17 +50,11 @@ export class HabitsService {
         isDoneToday,
       };
     });
-
-    return habitsWithStreak;
   }
 
   private calculateStreak(logs: any[]) {
-    if (logs.length === 0) {
-      return { streak: 0, isDoneToday: false };
-    }
-
     const today = dayjs().startOf('day');
-    const yesterday = dayjs().subtract(1, 'day').startOf('day');
+    const yesterday = today.subtract(1, 'day');
 
     // Verificar si está completado hoy
     const isDoneToday = logs.some((log) =>
@@ -216,4 +208,65 @@ export class HabitsService {
       },
     });
   }
-}
+
+  async getDashboard(userId: string) {
+    console.log('getDashboard called with userId:', userId);
+    
+    // Obtener todos los hábitos del usuario
+    const habits = await this.findAll(userId);
+    console.log('Found habits:', habits.length);
+    
+    // Calcular estadísticas
+    const totalHabits = habits.length;
+    const completedToday = habits.filter(h => h.isDoneToday).length;
+    const currentStreak = Math.max(...habits.map(h => h.streak), 0);
+    
+    console.log('Stats:', { totalHabits, completedToday, currentStreak });
+    
+    // Calcular progreso semanal (últimos7as)
+    const weekProgress: number[] = [];
+    const today = dayjs();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = today.subtract(i, 'day');
+      const dayStart = date.startOf('day');
+      
+      // Para cada día, calcular qué porcentaje de hábitos fueron completados
+      let completedForDay = 0;
+      
+      for (const habit of habits) {
+        // Verificar si el hábito fue completado en este día específico
+        const hasLogForDay = habit.habitLogs.some(log => 
+          dayjs(log.date).startOf('day').isSame(dayStart)
+        );
+        
+        if (hasLogForDay) {
+          completedForDay++;
+        }
+      }
+      
+      // Calcular porcentaje (evitar división por cero)
+      const percentage = totalHabits > 0 ? Math.round((completedForDay / totalHabits) * 100) : 0;
+      weekProgress.push(percentage);
+    }
+    
+    console.log('Week progress:', weekProgress);
+    
+    return {
+      totalHabits,
+      completedToday,
+      currentStreak,
+      weekProgress,
+      habits: habits.map(h => ({
+        id: h.id,
+        title: h.name,
+        subtitle: h.frequency,
+        completedToday: h.isDoneToday,
+        currentStreak: h.streak,
+        frequency: h.frequency,
+        goal: h.goal,
+        createdAt: h.createdAt,
+      })),
+    };
+  }
+} 

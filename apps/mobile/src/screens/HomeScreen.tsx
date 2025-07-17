@@ -1,494 +1,358 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  Alert, 
-  FlatList, 
-  RefreshControl, 
-  Animated, 
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+  Animated,
+  StatusBar,
   StyleSheet,
   Dimensions,
-  StatusBar
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../providers/AuthProvider";
 import { useNavigation } from "@react-navigation/native";
 import HabitCard from "../components/HabitCard";
 import { api } from "../utils/api";
-import { LinearGradient } from "expo-linear-gradient";
-import { Svg, Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
-interface Habit {
-  id: string;
-  name: string;
-  description: string;
-  frequency: string;
-  streak: number;
-  isDoneToday: boolean;
-  category: string;
-  createdAt: string;
-  logs: Array<{
-    id: string;
-    date: string;
-  }>;
-}
-
-interface HabitLog {
-  id: string;
-  habitId: string;
-  completedAt: string;
-}
-
-interface DashboardData {
-  habits: Habit[];
-  habitLogs: HabitLog[];
-  totalHabits: number;
-  completedToday: number;
-  currentStreak: number;
-  totalPoints: number;
-}
-
-const HomeScreen = () => {
+export default function HomeScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const insets = useSafeAreaInsets();
+  const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [fabScale] = useState(new Animated.Value(1));
-  const [headerOpacity] = useState(new Animated.Value(0));
-  const [progressCardScale] = useState(new Animated.Value(0.95));
-  const [progressCardElevation] = useState(new Animated.Value(2));
 
-  // Animaciones de entrada
+  // Animaciones
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const summaryY = useRef(new Animated.Value(40)).current;
+  const progressX = useRef(new Animated.Value(-60)).current;
+  const motivationPulse = useRef(new Animated.Value(1)).current;
+  const fabScale = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(progressCardScale, {
-        toValue: 1,
-        duration: 400,
-        delay: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(headerOpacity, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(summaryY, {
+      toValue: 0,
+      duration: 350,
+      delay: 200,
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(progressX, {
+      toValue: 0,
+      duration: 350,
+      delay: 400,
+      useNativeDriver: true,
+    }).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(motivationPulse, { toValue: 1.03, duration: 1200, useNativeDriver: true }),
+        Animated.timing(motivationPulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
+      ])
+    ).start();
   }, []);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await api.get("/habits/habit-logs");
-      setDashboardData(response.data);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      Alert.alert("Error", "No se pudo cargar el dashboard");
-    } finally {
-      setLoading(false);
+      const res = await api.get("/habits/dashboard");
+      setDashboard(res.data);
+    } catch {
+      setDashboard(null);
     }
+    setLoading(false);
   }, []);
+
+  useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    await fetchDashboard();
     setRefreshing(false);
-  }, [fetchDashboardData]);
+  }, [fetchDashboard]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
-  const handleHabitToggle = useCallback(async (habitId: string, completed: boolean) => {
-    try {
-      if (completed) {
-        await api.post("/habits/habit-logs", { habitId });
-      } else {
-        // Implementar lógica para desmarcar si es necesario
-      }
-      await fetchDashboardData();
-    } catch (error) {
-      console.error("Error toggling habit:", error);
-      Alert.alert("Error", "No se pudo actualizar el hábito");
-    }
-  }, [fetchDashboardData]);
-
-  const handleFabPress = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(fabScale, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fabScale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    navigation.navigate("CreateHabit" as never);
-  }, [fabScale, navigation]);
-
-  const handleProgressCardPress = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(progressCardElevation, {
-        toValue: 8,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-      Animated.timing(progressCardElevation, {
-        toValue: 2,
-        duration: 100,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }, [progressCardElevation]);
-
-  const renderHabitCard = useCallback(({ item }: { item: Habit }) => (
-    <HabitCard
-      habit={item}
-    />
-  ), []);
-
-  const keyExtractor = useCallback((item: Habit) => item.id, []);
-
-  const MiniChart = () => {
-    const data = [65, 80, 45, 90, 75, 85, 70];
-    const maxValue = Math.max(...data);
-    const chartWidth = (width * 0.9) - 32; // 90% width - padding
-    const chartHeight = 60;
-    const barWidth = chartWidth / data.length - 4;
-
-    return (
-      <View style={styles.miniChartContainer}>
-        <Svg width={chartWidth} height={chartHeight}>
-          {data.map((value, index) => {
-            const barHeight = (value / maxValue) * chartHeight;
-            const x = index * (barWidth + 4);
-            const y = chartHeight - barHeight;
-            
-            return (
-              <Path
-                key={index}
-                d={`M ${x} ${chartHeight} L ${x} ${y} L ${x + barWidth} ${y} L ${x + barWidth} ${chartHeight} Z`}
-                fill="url(#gradient)"
-                stroke="#407BFF"
-                strokeWidth="1"
-              />
-            );
-          })}
-          <Defs>
-            <SvgLinearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#407BFF" stopOpacity="0.8" />
-              <Stop offset="100%" stopColor="#407BFF" stopOpacity="0.3" />
-            </SvgLinearGradient>
-          </Defs>
-        </Svg>
-      </View>
-    );
+  // Fecha formateada
+  const getDate = () => {
+    const d = new Date();
+    return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
   };
 
-  const getCurrentDate = () => {
-    const today = new Date();
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    return today.toLocaleDateString('es-ES', options);
+  // Motivación dinámica
+  const streak = dashboard?.currentStreak || 0;
+  const motivation = streak < 3
+    ? { text: "¡Cada día cuenta! Los pequeños pasos llevan a grandes cambios.", bg: "#FEF3C7", color: "#92400E" }
+    : streak < 7 ? { text: "¡Excelente! Estás construyendo un hábito sólido.", bg: "#D1FAE5", color: "#065F46" }
+    : { text: "¡Increíble! Eres una máquina de consistencia.", bg: "#DBEAFE", color: "#1E40AF" };
+
+  // FAB
+  const handleFab = () => {
+    Animated.sequence([
+      Animated.timing(fabScale, { toValue: 0.9, duration: 80, useNativeDriver: true }),
+      Animated.timing(fabScale, { toValue: 1, duration: 80, useNativeDriver: true }),
+    ]).start(() => navigation.navigate("CreateHabit" as never));
   };
 
-  // Pantalla vacía cuando no hay hábitos
-  if (!loading && (!dashboardData?.habits || dashboardData.habits.length === 0)) {
+  // Skeleton loader
+  if (loading) {
     return (
-      <View style={styles.emptyContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#407BFF" />
-        
-        {/* Header compacto */}
-        <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
-          <LinearGradient
-            colors={["#407BFF", "#2A60E6"]}
-            style={styles.headerGradient}
-          >
-            <View style={styles.headerContent}>
-              <Text style={styles.greeting}>
-                ¡Hola, {user?.name?.split(" ")[0] || "Usuario"}!
-              </Text>
-              <Text style={styles.dateText}>{getCurrentDate()}</Text>
-            </View>
+      <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
+        <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+        <SafeAreaView edges={["top"]} style={{ flex: 0, backgroundColor: "transparent" }}>
+          <LinearGradient colors={["#407BFF", "#2A60E6"]} style={{
+            width: "100%",
+            paddingTop: (insets?.top || 0) + 24,
+            paddingHorizontal: 20,
+            paddingBottom: 20,
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+            overflow: "hidden",
+          }}>
+            <View style={{ height: 28, width: 180, backgroundColor: "#ffffff33", borderRadius: 8, marginBottom: 10 }} />
+            <View style={{ height: 16, width: 120, backgroundColor: "#ffffff33", borderRadius: 6 }} />
           </LinearGradient>
-        </Animated.View>
-
-        {/* Contenido centrado */}
-        <View style={styles.emptyContent}>
-          <View style={styles.emptyIconContainer}>
-            <Ionicons name="add-circle" size={80} color="#407BFF" />
-          </View>
-          <Text style={styles.emptyTitle}>No tienes hábitos aún</Text>
-          <Text style={styles.emptySubtitle}>
-            Comienza creando tu primer hábito para mejorar tu vida
-          </Text>
-        </View>
-
-        {/* FAB */}
-        <Animated.View style={[styles.fabContainer, { transform: [{ scale: fabScale }] }]}>
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={handleFabPress}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={["#407BFF", "#2A60E6"]}
-              style={styles.fabGradient}
-            >
-              <Ionicons name="add" size={28} color="white" />
-            </LinearGradient>
-          </TouchableOpacity>
-        </Animated.View>
+        </SafeAreaView>
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
+        <View style={styles.skeletonCard} />
       </View>
     );
   }
 
+  // Mini gráfico de barras (dummy data)
+  const weekData = dashboard?.weekProgress || [2, 4, 3, 1, 0, 2, 1];
+  const maxVal = Math.max(...weekData, 1);
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#407BFF" />
-      
-      {/* Header compacto */}
-      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+    <View style={{ flex: 1, backgroundColor: "#f8f9fa" }}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      {/* Header vibrante y seguro para notch */}
+      <Animated.View style={{ opacity: headerOpacity }}>
         <LinearGradient
           colors={["#407BFF", "#2A60E6"]}
-          style={styles.headerGradient}
+          style={{
+            width: "100%",
+            paddingTop: insets.top + 32,
+            paddingHorizontal: 20,
+            paddingBottom: 48, // más espacio para que el resumen no tape el header
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            overflow: "hidden",
+          }}
         >
-          <View style={styles.headerContent}>
-            <Text style={styles.greeting}>
-              ¡Hola, {user?.name?.split(" ")[0] || "Usuario"}!
-            </Text>
-            <Text style={styles.dateText}>{getCurrentDate()}</Text>
-          </View>
+          <Text style={styles.greeting} accessibilityLabel="Saludo">
+            ¡Hola, {user?.name?.split(" ")[0] || "Usuario"}!
+          </Text>
+          <Text style={[styles.date, { opacity: 0.5 }]}>{getDate()}</Text>
         </LinearGradient>
       </Animated.View>
-
-      {/* Contenido principal */}
-      <View style={styles.content}>
-        {/* Progreso Semanal */}
-        <Animated.View 
-          style={[
-            styles.progressCard,
-            { 
-              transform: [{ scale: progressCardScale }],
-              elevation: progressCardElevation,
-              shadowOpacity: progressCardElevation.interpolate({
-                inputRange: [0, 8],
-                outputRange: [0.1, 0.3],
-              }),
-            }
-          ]}
-        >
-          <TouchableOpacity 
-            style={styles.progressCardTouchable}
-            onPress={handleProgressCardPress}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.sectionTitle}>Progreso Semanal</Text>
-            <MiniChart />
-            <View style={styles.progressStats}>
-              <View style={styles.progressStat}>
-                <Text style={styles.progressStatNumber}>{dashboardData?.completedToday || 0}</Text>
-                <Text style={styles.progressStatLabel}>Hoy</Text>
-              </View>
-              <View style={styles.progressStat}>
-                <Text style={styles.progressStatNumber}>{dashboardData?.currentStreak || 0}</Text>
-                <Text style={styles.progressStatLabel}>Racha</Text>
-              </View>
-              <View style={styles.progressStat}>
-                <Text style={styles.progressStatNumber}>{dashboardData?.totalPoints || 0}</Text>
-                <Text style={styles.progressStatLabel}>Puntos</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Lista de hábitos */}
-        <View style={styles.habitsSection}>
-          <Text style={styles.sectionTitle}>Tus Hábitos</Text>
-          <FlatList
-            data={dashboardData?.habits || []}
-            renderItem={renderHabitCard}
-            keyExtractor={keyExtractor}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.habitsList}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor="#407BFF"
-                colors={["#407BFF"]}
-              />
-            }
-          />
+      {/* Resumen con solapamiento dinámico */}
+      <Animated.View style={[
+        styles.summaryCard,
+        { transform: [{ translateY: summaryY }], marginTop: -24 }
+      ]}>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryCol}>
+            <Ionicons name="locate" size={28} color="#407BFF" style={{ marginBottom: 2 }} />
+            <Text style={styles.summaryNum}>{dashboard?.totalHabits || 0}</Text>
+            <Text style={styles.summaryLabel}>Hábitos</Text>
+          </View>
+          <View style={styles.summaryCol}>
+            <Ionicons name="checkmark-done-circle" size={28} color="#10B981" style={{ marginBottom: 2 }} />
+            <Text style={styles.summaryNum}>{dashboard?.completedToday || 0}</Text>
+            <Text style={styles.summaryLabel}>Completados</Text>
+          </View>
+          <View style={styles.summaryCol}>
+            <Ionicons name="flame" size={28} color="#F59E42" style={{ marginBottom: 2 }} />
+            <Text style={styles.summaryNum}>{dashboard?.currentStreak || 0}</Text>
+            <Text style={styles.summaryLabel}>Racha</Text>
+          </View>
         </View>
-      </View>
-
+      </Animated.View>
+      {/* Gráfica de progreso semanal */}
+      <Animated.View style={[
+        styles.progressCard,
+        { transform: [{ translateX: progressX }] }
+      ]}>
+        <Text style={styles.progressTitle}>Progreso semanal</Text>
+        <Text style={styles.progressSubtitle}>% completados por día</Text>
+        <View style={styles.barChart}>
+          {weekData.map((val, i) => (
+            <View key={i} style={styles.barContainer}>
+              <View style={[
+                styles.bar,
+                {
+                  width: 12, // más ancho
+                  height: 48 * (val / maxVal),
+                  backgroundColor: "#407BFF",
+                  opacity: 0.7 + 0.3 * (val / maxVal)
+                }
+              ]} />
+              <Text style={styles.barLabel}>{["L", "M", "X", "J", "V", "S", "D"][i]}</Text>
+            </View>
+          ))}
+        </View>
+      </Animated.View>
+      {/* Mensaje motivacional */}
+      <Animated.View
+        style={[
+          styles.motivationCard,
+          {
+            backgroundColor: motivation.bg,
+            transform: [{ scale: motivationPulse }],
+            marginTop: 16,
+          },
+        ]}
+      >
+        <Text style={[styles.motivationText, { color: motivation.color }]} accessibilityLabel="Frase motivacional">
+          {motivation.text}
+        </Text>
+      </Animated.View>
+      {/* Lista de hábitos */}
+      <FlatList
+        data={dashboard?.habits || []}
+        keyExtractor={h => h.id}
+        renderItem={({ item }) => <HabitCard habit={item} onPress={() => {}} />}
+        contentContainerStyle={styles.habitsList}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#407BFF" colors={["#407BFF"]} />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="add-circle" size={80} color="#407BFF" style={{ marginBottom: 16 }} />
+            <Text style={styles.emptyTitle}>No tienes hábitos aún</Text>
+            <Text style={styles.emptySubtitle}>Toca + para empezar</Text>
+          </View>
+        }
+        showsVerticalScrollIndicator={false}
+      />
       {/* FAB */}
-      <Animated.View style={[styles.fabContainer, { transform: [{ scale: fabScale }] }]}>
+      <Animated.View style={[styles.fabContainer, { transform: [{ scale: fabScale }] }]}> 
         <TouchableOpacity
           style={styles.fab}
-          onPress={handleFabPress}
+          onPress={handleFab}
           activeOpacity={0.8}
+          accessibilityLabel="Crear nuevo hábito"
+          accessibilityRole="button"
         >
-          <LinearGradient
-            colors={["#407BFF", "#2A60E6"]}
-            style={styles.fabGradient}
-          >
+          <LinearGradient colors={["#407BFF", "#2A60E6"]} style={styles.fabGradient}>
             <Ionicons name="add" size={28} color="white" />
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  emptyContainer: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  header: {
-    height: 60,
-  },
-  headerGradient: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    justifyContent: "center",
-  },
-  headerContent: {
-    flex: 1,
-    justifyContent: "center",
-  },
   greeting: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 2,
-  },
-  dateText: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  emptyContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  emptyIconContainer: {
-    marginBottom: 24,
-  },
-  emptyTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#1a1a2e",
-    textAlign: "center",
-    marginBottom: 8,
+    color: "white",
+    marginBottom: 4,
+    textAlign: "left",
   },
-  emptySubtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 24,
+  date: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.8)",
+    textAlign: "left",
   },
+  summaryCard: {
+    width: "90%",
+    maxWidth: 420,
+    alignSelf: "center",
+    backgroundColor: "white",
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 18,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  summaryRow: { flexDirection: "row", justifyContent: "space-between" },
+  summaryCol: { alignItems: "center", flex: 1 },
+  summaryNum: { fontSize: 32, fontWeight: "bold", color: "#1A1A2E", marginBottom: 2 },
+  summaryLabel: { fontSize: 13, color: "#666", fontWeight: "500", textTransform: 'capitalize' },
   progressCard: {
+    width: "90%",
+    maxWidth: 420,
+    alignSelf: "center",
     backgroundColor: "white",
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowRadius: 8,
-    shadowOpacity: 0.1,
-    elevation: 2,
-  },
-  progressCardTouchable: {
-    flex: 1,
-  },
-  miniChartContainer: {
-    alignItems: "center",
-    marginVertical: 16,
-  },
-  progressStats: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 16,
-  },
-  progressStat: {
-    alignItems: "center",
-  },
-  progressStatNumber: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#407BFF",
-  },
-  progressStatLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-  habitsSection: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1a1a2e",
+    padding: 16,
     marginBottom: 16,
-  },
-  habitsList: {
-    paddingBottom: 100, // Espacio para FAB
-  },
-  fabContainer: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-    zIndex: 1000,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    elevation: 2,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowRadius: 8,
-    shadowOpacity: 0.3,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
-  fabGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1A1A2E",
+    marginBottom: 4,
+    textAlign: "left",
   },
-});
-
-export default HomeScreen;
+  progressSubtitle: {
+    fontSize: 12,
+    color: "#888",
+    marginBottom: 10,
+    textAlign: "left",
+  },
+  barChart: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    height: 52,
+    marginTop: 2,
+    marginBottom: 2,
+    paddingHorizontal: 8,
+  },
+  barContainer: { alignItems: "center", flex: 1, marginHorizontal: 2 },
+  bar: {
+    width: 12,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  barLabel: {
+    fontSize: 11,
+    color: "#888",
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  motivationCard: {
+    width: "88%",
+    alignSelf: "center",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 18,
+    elevation: 1,
+  },
+  motivationText: { fontSize: 15, fontWeight: "600", textAlign: "center" },
+  habitsList: { paddingBottom: 120 },
+  emptyState: { alignItems: "center", justifyContent: "center", paddingVertical: 60 },
+  emptyTitle: { fontSize: 20, fontWeight: "bold", color: "#1a1a2e", textAlign: "center", marginBottom: 8 },
+  emptySubtitle: { fontSize: 14, color: "#666", textAlign: "center" },
+  fabContainer: { position: "absolute", bottom: 24, right: 24, zIndex: 10 },
+  fab: {
+    width: 56, height: 56, borderRadius: 28,
+    elevation: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8,
+  },
+  fabGradient: { width: 56, height: 56, borderRadius: 28, justifyContent: "center", alignItems: "center" },
+  skeletonCard: {
+    width: "90%", backgroundColor: "#e5e7eb", borderRadius: 16, alignSelf: "center", marginVertical: 8,
+  },
+}); 

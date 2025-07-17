@@ -1,137 +1,60 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigation } from "@react-navigation/native";
-import { createHabitLog } from "../utils/api";
+import React, { useRef } from "react";
+import {
+  Animated,
+  TouchableWithoutFeedback,
+  View,
+  Text,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-interface Habit {
-  id: string;
-  name: string;
-  frequency: string;
-  goal?: number;
-  isRecurring?: boolean;
-  daysOfWeek?: string[];
-  streak: number;
-  isDoneToday: boolean;
-  logs: Array<{
-    id: string;
-    date: string;
-  }>;
-}
+export default function HabitCard({ habit, onPress }) {
+  const scale = useRef(new Animated.Value(1)).current;
 
-interface HabitCardProps {
-  habit: Habit;
-}
-
-export default function HabitCard({ habit }: HabitCardProps) {
-  const queryClient = useQueryClient();
-  const navigation = useNavigation();
-
-  const createLogMutation = useMutation({
-    mutationFn: createHabitLog,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
-      Alert.alert("¡Completado!", `${habit.name} marcado como completado`);
-    },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Error al marcar como completado");
-    },
-  });
-
-  const handleMarkComplete = () => {
-    createLogMutation.mutate({
-      habitId: habit.id,
-    });
-  };
-
-  const handleEdit = () => {
-    navigation.navigate("EditHabit" as never, { habit } as never);
-  };
-
-  const isCompletedToday = () => {
-    return habit.isDoneToday;
-  };
-
-  const getFrequencyText = (frequency: string) => {
-    switch (frequency) {
-      case "daily":
-        return "Diario";
-      case "weekly":
-        return "Semanal";
-      case "monthly":
-        return "Mensual";
-      default:
-        return frequency;
-    }
-  };
-
-  const getDaysText = () => {
-    if (
-      !habit.isRecurring ||
-      !habit.daysOfWeek ||
-      habit.daysOfWeek.length === 0
-    ) {
-      return "";
-    }
-
-    const dayLabels = {
-      monday: "Lun",
-      tuesday: "Mar",
-      wednesday: "Mié",
-      thursday: "Jue",
-      friday: "Vie",
-      saturday: "Sáb",
-      sunday: "Dom",
-    };
-
-    return habit.daysOfWeek
-      .map((day) => dayLabels[day as keyof typeof dayLabels] || day)
-      .join(", ");
-  };
-
-  const completedToday = isCompletedToday();
+  const handlePressIn = () =>
+    Animated.timing(scale, {
+      toValue: 0.97,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  const handlePressOut = () =>
+    Animated.timing(scale, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
 
   return (
-    <View style={[styles.card, completedToday && styles.cardCompleted]}>
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.name}>{habit.name}</Text>
-          <Text style={styles.frequency}>
-            {getFrequencyText(habit.frequency)}
-          </Text>
-        </View>
-        <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-          <Text style={styles.editButtonText}>✏️</Text>
-        </TouchableOpacity>
-      </View>
-
-      {habit.isRecurring && habit.daysOfWeek && habit.daysOfWeek.length > 0 && (
-        <Text style={styles.daysText}>Días: {getDaysText()}</Text>
-      )}
-
-      {habit.goal && <Text style={styles.goal}>Meta: {habit.goal}</Text>}
-
-      <View style={styles.stats}>
-        <Text style={styles.streak}>🔥 {habit.streak} días consecutivos</Text>
-      </View>
-
-      <TouchableOpacity
+    <TouchableWithoutFeedback
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityRole="button"
+      accessibilityLabel={`Hábito: ${habit.name}`}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
+      <Animated.View
         style={[
-          styles.completeButton,
-          completedToday && styles.completedButton,
+          styles.card,
+          { transform: [{ scale }] },
+          habit.isDoneToday && styles.cardCompleted,
         ]}
-        onPress={handleMarkComplete}
-        disabled={completedToday || createLogMutation.isPending}
       >
-        <Text style={styles.completeButtonText}>
-          {completedToday
-            ? "✓ Completado"
-            : createLogMutation.isPending
-              ? "Marcando..."
-              : "Marcar como completado"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={1}>
+            {habit.name}
+          </Text>
+          {habit.isDoneToday && (
+            <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+          )}
+        </View>
+        {habit.frequency && (
+          <Text style={styles.subtitle} numberOfLines={1}>
+            {habit.frequency}
+          </Text>
+        )}
+      </Animated.View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -139,83 +62,37 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     marginBottom: 12,
+    elevation: 2,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 4,
+    minHeight: 56,
+    minWidth: 44,
+    justifyContent: "center",
   },
   cardCompleted: {
-    backgroundColor: "#f0f8ff",
-    borderColor: "#4CAF50",
-    borderWidth: 1,
+    borderColor: "#10B981",
+    borderWidth: 1.5,
+    backgroundColor: "#ECFDF5",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  titleContainer: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  frequency: {
-    fontSize: 14,
-    color: "#666",
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-  },
-  editButton: {
-    padding: 8,
-  },
-  editButtonText: {
-    fontSize: 18,
-  },
-  daysText: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-    fontStyle: "italic",
-  },
-  goal: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  stats: {
-    marginBottom: 12,
-  },
-  streak: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "500",
-  },
-  completeButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    padding: 12,
     alignItems: "center",
+    marginBottom: 6,
   },
-  completedButton: {
-    backgroundColor: "#4CAF50",
-  },
-  completeButtonText: {
-    color: "#fff",
+  title: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#1A1A2E",
+    flex: 1,
+    marginRight: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
   },
 });
